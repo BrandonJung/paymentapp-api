@@ -16,17 +16,26 @@ switch (process.env.NODE_ENV) {
 
 const client = new MongoClient(connectionString);
 
-export const connectToDB = async () => {
-  try {
-    const database = client.db("sample_mflix");
-    const movies = database.collection("movies");
-    // Query for a movie that has the title 'Back to the Future'
-    const query = { title: "Back to the Future" };
-    const movie = await movies.findOne(query);
-    console.log(movie);
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-};
-connectToDB().catch(console.dir);
+let connection;
+
+try {
+  connection = await client.connect();
+} catch (e) {
+  console.log(e);
+}
+
+export const database = connection.db(process.env.NODE_ENV);
+
+// export const connectToDB = async () => {
+//   try {
+//     const database = client.db("sample_mflix");
+//     const movies = database.collection("movies");
+//     // Query for a movie that has the title 'Back to the Future'
+//     const query = { title: "Back to the Future" };
+//     const movie = await movies.findOne(query);
+//   } finally {
+//     // Ensures that the client will close when you finish/error
+//     await client.close();
+//   }
+// };
+// connectToDB().catch(console.dir);

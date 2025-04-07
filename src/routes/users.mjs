@@ -1,25 +1,48 @@
 import { Router } from "express";
-// import { checkSchema, query, validationResult } from "express-validator";
-// import { mockUsers } from "../utils/constants.mjs";
-// import { createUserValidationSchema } from "../utils/validationSchemas.mjs";
-// import { createUserHandler, getUserByIdHandler } from "../handlers/users.mjs";
+import {
+  createUser,
+  getUserById,
+  loginUser,
+  logoutUser,
+} from "../handlers/users.mjs";
+import passport from "passport";
 
 const router = Router();
 
+router.get("/get", getUserById);
+
+router.post("/create", createUser);
+
+router.post("/login", passport.authenticate("local"), loginUser);
+
+router.post("/logout", logoutUser);
+
+router.get("/", (req, res) => {
+  console.log(req.session.id);
+  req.sessionStore.get(req.session.id, (err, sessionData) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+    console.log("Session store data: ", sessionData);
+  });
+  return res.send({ message: "Session data" });
+});
+
 // router.get("/api/users/:id", getUserByIdHandler);
 
-// router.get("/", query("filter").isNumeric(), (request, response) => {
-//   const result = validationResult(request);
+// router.get("/", query("filter").isNumeric(), (req, res) => {
+//   const result = validationResult(req);
 //   console.log(result);
 
 //   const {
 //     query: { filter, value },
-//   } = request;
+//   } = req;
 
 //   if (filter && value) {
-//     return response.send(mockUsers.filter(user > user[filter].includes(value)));
+//     return res.send(mockUsers.filter(user > user[filter].includes(value)));
 //   }
-//   return response.send(mockUsers);
+//   return res.send(mockUsers);
 // });
 
 // router.post(
