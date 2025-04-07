@@ -10,6 +10,10 @@ export const createUser = async (req, res) => {
   } = req;
   const hPassword = await hashPassword(password);
   try {
+    const foundUser = await findUserByEmail(email);
+    if (foundUser) {
+      return res.status(400).send({ message: "Email already used" });
+    }
     const newUser = await userColl.insertOne({
       email,
       password: hPassword,
