@@ -1,8 +1,18 @@
 import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
-import { hashPassword } from "../utils/helpers.mjs";
+import {
+  comparePassword,
+  getTimeUTC,
+  hashPassword,
+  hashToken,
+} from "../utils/helpers.mjs";
+import jwt from "jsonwebtoken";
 
 const userColl = database.collection("users");
+
+export const retrieveUserData = async (req, res) => {
+  return res.status(200).send({ message: "hey" });
+};
 
 export const createUser = async (req, res) => {
   const {
@@ -14,28 +24,137 @@ export const createUser = async (req, res) => {
     if (foundUser) {
       return res.status(400).send({ message: "Email already used" });
     }
-    const newUser = await userColl.insertOne({
+
+    const timestamp = getTimeUTC();
+
+    const userObj = {
       email,
       password: hPassword,
-    });
-    return res.status(200).send({ messsage: "User created", user: newUser });
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      emailVerified: false,
+      role: "TO IMPLEMENT",
+    };
+
+    const newUser = await userColl.insertOne(userObj);
+
+    const user = await findUserByEmail(email);
+
+    const accessToken = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.SECRET_KEY,
+      { expiresIn: "60s" }
+    );
+
+    const refreshToken = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.SECRET_KEY,
+      { expiresIn: "30d" }
+    );
+
+    const hashedRefreshToken = await hashToken(refreshToken);
+
+    const timestamp2 = getTimeUTC();
+
+    const updatedUser = await userColl.updateOne(
+      {
+        _id: user._id,
+      },
+      {
+        $set: { refreshToken: hashedRefreshToken, updatedAt: timestamp2 },
+      }
+    );
+
+    return res
+      .status(200)
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      })
+      .send({ messsage: "User created", user, accessToken });
   } catch (err) {
     console.log(err);
   }
 };
 
-export const loginUser = (req, res) => {
-  return res.send({ message: "User logged in" });
+export const newAccessToken = async (req, res) => {
+  const { userId } = req.body;
+  console.log(req);
+  const refreshToken = req.cookies["refreshToken"];
+  if (!refreshToken) {
+    return res.status(401).send({ message: "Invalid refresh token" });
+  }
+
+  if (!userId) {
+    return res.status(400).send({ message: "No user Id" });
+  }
+
+  const user = await findUserById(userId);
+
+  const accessToken = jwt.sign(
+    {
+      id: user._id,
+    },
+    process.env.SECRET_KEY,
+    { expiresIn: "60s" }
+  );
+  return res.status(200).send({ message: "Token given", accessToken });
 };
 
-export const logoutUser = (req, res) => {
-  if (!req.user) return res.sendStatus(401);
-  req.logout((err) => {
-    if (err) {
-      return res.sendStatus(400);
+export const loginUser = async (req, res) => {
+  const {
+    body: { email, password },
+  } = req;
+  const user = await findUserByEmail(email);
+  if (!user) {
+    return res.status(400).send({ message: "User already exists" });
+  }
+  const passwordIsCorrect = await comparePassword(password, user.password);
+  if (!passwordIsCorrect) {
+    return res.status(400).send({ message: "Invalid credentials" });
+  }
+  return res.status(200).send(user);
+};
+
+export const logoutUser = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.sendStatus(400);
+  }
+
+  const user = await findUserById(userId);
+
+  if (!user) {
+    return res.sendStatus(400);
+  }
+
+  const timestamp = getTimeUTC();
+
+  const updatedUser = await userColl.updateOne(
+    {
+      _id: new ObjectId(userId),
+    },
+    {
+      $unset: { refreshToken: 1 },
+    },
+    {
+      $set: {
+        updatedAt: timestamp,
+      },
     }
-    res.send(200);
-  });
+  );
+  return res
+    .status(200)
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    })
+    .send({ message: "Logged out user" });
 };
 
 export const getUserById = async (req, res) => {

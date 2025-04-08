@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 // // Setting middleware globally or pass function as 2nd argument before (req, res), must invoke before wanted end points
 // // Can be passed into a router to be called during specific routes
 // const loggingMiddleware = (req, res, next) => {
@@ -18,3 +19,20 @@
 //   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 //   next();
 // };
+
+export const verifyCredentials = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  console.log(authHeader);
+  if (authHeader) {
+    const token = authHeader.split(" ")[1];
+    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+      if (err) {
+        res.status(403).json("Token is not valid");
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    return res.status(402).json("You are not authorized");
+  }
+};

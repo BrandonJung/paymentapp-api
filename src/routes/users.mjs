@@ -4,18 +4,24 @@ import {
   getUserById,
   loginUser,
   logoutUser,
+  newAccessToken,
+  retrieveUserData,
 } from "../handlers/users.mjs";
-import passport from "passport";
+import { verifyCredentials } from "../utils/middlewares.mjs";
 
 const router = Router();
 
 router.get("/get", getUserById);
 
+router.get("/retrieveUserData", verifyCredentials, retrieveUserData);
+
 router.post("/create", createUser);
 
-router.post("/login", passport.authenticate("local"), loginUser);
+router.post("/login", loginUser);
 
 router.post("/logout", logoutUser);
+
+router.post("/newAccessToken", newAccessToken);
 
 router.get("/", (req, res) => {
   console.log(req.session.id);

@@ -2,11 +2,8 @@ import "dotenv/config";
 import express from "express";
 import routes from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
-import session from "express-session";
 // import { connectToDB } from "../config.mjs";
 import cors from "cors";
-import passport from "passport";
-import "./strategies/local-strategy.mjs";
 
 const app = express();
 
@@ -33,19 +30,6 @@ app.use(cors(corsOptions));
 //   next();
 // });
 
-app.use(
-  session({
-    secret: "replace this with actual secret",
-    saveUninitialized: false,
-    resave: false,
-    cookie: {
-      maxAge: 60000 * 60, // This is one day, time in milliseconds
-    },
-  })
-);
-
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(routes);
 
 const PORT = process.env.PORT || 3001;
