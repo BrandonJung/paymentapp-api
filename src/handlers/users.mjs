@@ -2,6 +2,8 @@ import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import {
   comparePassword,
+  generateAccessToken,
+  generateRefreshToken,
   getTimeUTC,
   hashPassword,
   hashToken,
@@ -9,6 +11,7 @@ import {
 import jwt from "jsonwebtoken";
 
 const userColl = database.collection("users");
+const refreshTokenAge = 30 * 24 * 60 * 60 * 1000;
 
 export const retrieveUserData = async (req, res) => {
   return res.status(200).send({ message: "hey" });
@@ -33,6 +36,7 @@ export const createUser = async (req, res) => {
       createdAt: timestamp,
       updatedAt: timestamp,
       emailVerified: false,
+      lastLogin: timestamp,
       role: "TO IMPLEMENT",
     };
 
@@ -73,9 +77,9 @@ export const createUser = async (req, res) => {
       .status(200)
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: refreshTokenAge,
       })
-      .send({ messsage: "User created", user, accessToken });
+      .send({ messsage: "User created", userId: user._id, accessToken });
   } catch (err) {
     console.log(err);
   }
@@ -109,15 +113,43 @@ export const loginUser = async (req, res) => {
   const {
     body: { email, password },
   } = req;
-  const user = await findUserByEmail(email);
-  if (!user) {
-    return res.status(400).send({ message: "User already exists" });
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(400).send({ message: "User does not exist" });
+    }
+    const passwordIsCorrect = await comparePassword(password, user.password);
+    if (!passwordIsCorrect) {
+      return res.status(400).send({ message: "Invalid credentials" });
+    }
+
+    const timestamp = getTimeUTC();
+    const accessToken = generateAccessToken({ id: user._id });
+    const refreshToken = generateRefreshToken({ id: user._id }, "30d");
+
+    const hashedRefreshToken = await hashToken(refreshToken);
+
+    const updatedUser = await userColl.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          refreshToken: hashedRefreshToken,
+          updatedAt: timestamp,
+          lastLogin: timestamp,
+        },
+      }
+    );
+
+    return res
+      .status(200)
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: refreshTokenAge,
+      })
+      .send({ message: "User logged in", userId: user._id, accessToken });
+  } catch (err) {
+    console.log(err);
   }
-  const passwordIsCorrect = await comparePassword(password, user.password);
-  if (!passwordIsCorrect) {
-    return res.status(400).send({ message: "Invalid credentials" });
-  }
-  return res.status(200).send(user);
 };
 
 export const logoutUser = async (req, res) => {
@@ -186,7 +218,9 @@ export const findUserByEmail = async (email) => {
 };
 
 export const findUserById = async (id) => {
-  const foundUser = await userColl.findOne({ _id: new ObjectId(id) });
+  const foundUser = await userColl.findOne({
+    _id: ObjectId.createFromHexString(id),
+  });
   console.log("Found user by id: ", id, foundUser);
   return foundUser;
 };

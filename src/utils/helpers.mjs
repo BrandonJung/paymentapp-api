@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const saltRounds = 10;
 
@@ -30,4 +31,18 @@ export const isValidEmail = (email) => {
 export const getTimeUTC = () => {
   const timestamp = new Date().getTime();
   return timestamp;
+};
+
+export const generateAccessToken = (payload = {}, expire = "60s") => {
+  const resToken = jwt.sign(payload, process.env.SECRET_KEY, {
+    expiresIn: expire,
+  });
+  return resToken;
+};
+
+export const generateRefreshToken = (payload = {}, expire = "30d") => {
+  const resToken = jwt.sign(payload, process.env.SECRET_KEY, {
+    expiresIn: expire,
+  });
+  return resToken;
 };
