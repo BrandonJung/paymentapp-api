@@ -148,13 +148,9 @@ export const logoutUser = async (req, res) => {
       },
     }
   );
-  return res
-    .status(200)
-    .clearCookie("refreshToken", {
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    })
-    .send({ message: "Logged out user" });
+
+  res.clearCookie("refreshToken", { httpOnly: true });
+  return res.status(200).send({ message: "Successfully logged out" });
 };
 
 export const getUserById = async (req, res) => {
@@ -167,6 +163,17 @@ export const getUserById = async (req, res) => {
       throw new Error("User not found");
     }
     return res.status(200).send(foundUser);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const deleteAllUsers = async (req, res) => {
+  try {
+    const deleteRes = await userColl.deleteMany({});
+    return res
+      .status(200)
+      .send({ message: "All users deleted", res: deleteRes });
   } catch (err) {
     console.log(err);
   }
