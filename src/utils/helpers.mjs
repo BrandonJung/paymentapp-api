@@ -46,3 +46,15 @@ export const generateRefreshToken = (payload = {}, expire = "30d") => {
   });
   return resToken;
 };
+
+export const generateTokens = async (
+  userId,
+  expireAccess = "60s",
+  expireRefresh = "30d"
+) => {
+  const accessToken = generateAccessToken({ id: userId }, expireAccess);
+  const refreshToken = generateRefreshToken({ id: userId }, expireRefresh);
+  const hashedRefreshToken = await hashToken(refreshToken);
+
+  return { accessToken, refreshToken, hashedRefreshToken };
+};

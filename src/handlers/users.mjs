@@ -4,6 +4,7 @@ import {
   comparePassword,
   generateAccessToken,
   generateRefreshToken,
+  generateTokens,
   getTimeUTC,
   hashPassword,
   hashToken,
@@ -30,16 +31,14 @@ export const retrieveUserData = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
-  const {
-    body: { email, password },
-  } = req;
-  const hPassword = await hashPassword(password);
+  const { email, password } = req.body;
   try {
     const foundUser = await findUserByEmail(email);
     if (foundUser) {
       return res.status(400).send({ message: "Email already used" });
     }
 
+    const hPassword = await hashPassword(password);
     const timestamp = getTimeUTC();
 
     const userObj = {
@@ -52,9 +51,9 @@ export const createUser = async (req, res) => {
       role: "TO IMPLEMENT",
     };
 
-    const newUser = await userColl.insertOne(userObj);
+    const { insertedId } = await userColl.insertOne(userObj);
 
-    const user = await findUserByEmail(email);
+    const user = await findUserById(insertedId.toString);
 
     const accessToken = generateAccessToken({ id: user._id });
     const refreshToken = generateRefreshToken({ id: user._id }, "30d");
@@ -63,7 +62,7 @@ export const createUser = async (req, res) => {
 
     const timestamp2 = getTimeUTC();
 
-    const updatedUser = await userColl.updateOne(
+    await userColl.updateOne(
       {
         _id: user._id,
       },
@@ -87,8 +86,8 @@ export const createUser = async (req, res) => {
 export const newAccessToken = async (req, res) => {
   const { userId } = req.body;
   console.log("New access token: ", req.body, req.cookies["refreshToken"]);
-  const refreshToken = req.cookies["refreshToken"];
-  if (!refreshToken) {
+  const cRefreshToken = req.cookies["refreshToken"];
+  if (!cRefreshToken) {
     return res.status(401).send({ message: "Invalid refresh token" });
   }
 
@@ -98,14 +97,13 @@ export const newAccessToken = async (req, res) => {
 
   const user = await findUserById(userId);
 
-  const accessToken = generateAccessToken({ id: user._id });
-  const newRefreshToken = generateRefreshToken({ id: user._id }, "30d");
-
-  const hashedRefreshToken = await hashToken(newRefreshToken);
+  const { accessToken, refreshToken, hashedRefreshToken } = generateTokens(
+    user._id
+  );
 
   const timestamp = getTimeUTC();
 
-  const updatedUser = await userColl.updateOne(
+  await userColl.updateOne(
     {
       _id: userId,
     },
@@ -116,7 +114,7 @@ export const newAccessToken = async (req, res) => {
 
   return res
     .status(200)
-    .cookie("refreshToken", newRefreshToken, {
+    .cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: refreshTokenAge,
     })
@@ -124,9 +122,7 @@ export const newAccessToken = async (req, res) => {
 };
 
 export const loginUser = async (req, res) => {
-  const {
-    body: { email, password },
-  } = req;
+  const { email, password } = req.body;
   try {
     const user = await findUserByEmail(email);
     if (!user) {
@@ -138,12 +134,12 @@ export const loginUser = async (req, res) => {
     }
 
     const timestamp = getTimeUTC();
-    const accessToken = generateAccessToken({ id: user._id });
-    const refreshToken = generateRefreshToken({ id: user._id }, "30d");
 
-    const hashedRefreshToken = await hashToken(refreshToken);
+    const { accessToken, refreshToken, hashedRefreshToken } = generateTokens(
+      user._id
+    );
 
-    const updatedUser = await userColl.updateOne(
+    await userColl.updateOne(
       { _id: user._id },
       {
         $set: {
