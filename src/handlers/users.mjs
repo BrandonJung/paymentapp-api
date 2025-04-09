@@ -38,7 +38,7 @@ export const retrieveUserData = async (req, res, next) => {
   }
 };
 
-export const createUser = async (req, res, next) => {
+export const createAdminUser = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const foundUser = await findUserByEmail(email);
@@ -59,7 +59,7 @@ export const createUser = async (req, res, next) => {
       updatedAt: timestamp,
       emailVerified: false,
       lastLogin: timestamp,
-      role: "TO IMPLEMENT",
+      roles: ["admin"],
     };
 
     const { insertedId } = await userColl.insertOne(userObj);
