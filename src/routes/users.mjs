@@ -12,15 +12,13 @@ import { verifyCredentials } from "../utils/middlewares.mjs";
 
 const router = Router();
 
-router.get("/get", getUserById);
-
-router.get("/retrieveUserData", verifyCredentials, retrieveUserData);
-
 router.post("/create", createUser);
 
 router.post("/login", loginUser);
 
 router.post("/logout", logoutUser);
+
+router.get("/retrieveUserData", verifyCredentials, retrieveUserData);
 
 router.post("/newAccessToken", newAccessToken);
 

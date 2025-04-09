@@ -199,21 +199,6 @@ export const logoutUser = async (req, res) => {
   return res.status(200).send({ message: "Successfully logged out" });
 };
 
-export const getUserById = async (req, res) => {
-  const {
-    query: { id },
-  } = req;
-  try {
-    const foundUser = await findUserById(id);
-    if (!foundUser) {
-      throw new Error("User not found");
-    }
-    return res.status(200).send(foundUser);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
 export const deleteAllUsers = async (req, res) => {
   try {
     const deleteRes = await userColl.deleteMany({});
@@ -225,8 +210,19 @@ export const deleteAllUsers = async (req, res) => {
   }
 };
 
-export const findUserByEmail = async (email) => {
-  const foundUser = await userColl.findOne({ email: email });
+export const findUserByEmail = async (email, fields) => {
+  let retFields = {};
+  if (fields && fields.length > 0) {
+    let splitFields = fields.split(",");
+    for (let field of splitFields) {
+      retFields[field] = 1;
+    }
+  }
+
+  const foundUser = await userColl.findOne(
+    { email: email },
+    { projection: retFields }
+  );
   console.log("Found user by email: ", email, foundUser);
   return foundUser;
 };

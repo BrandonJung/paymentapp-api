@@ -16,19 +16,6 @@ const corsOptions = {
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
-// app.use(function (req, res, next) {
-//   if (!res.headers.authorization) {
-//     return res.status(403).json({ error: "No credentials sent!" });
-//   }
-//   console.log("User authenticated");
-//   res.setHeader("Access-Control-Allow-Credentials", true);
-//   res.setHeader(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-//   next();
-// });
 
 app.use(routes);
 
