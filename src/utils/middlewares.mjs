@@ -22,17 +22,18 @@ import jwt from "jsonwebtoken";
 
 export const verifyCredentials = (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  console.log(authHeader);
+  console.log("Verifying credentials", authHeader);
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
       if (err) {
-        res.status(403).json("Token is not valid");
+        return res.status(401).send({ message: "Token not valid" });
       }
-      req.user = user;
+      console.log("Verify Credentials: ", user);
+      req.userId = user.id;
       next();
     });
   } else {
-    return res.status(402).json("You are not authorized");
+    return res.status(402).send({ message: "You are not authorized" });
   }
 };

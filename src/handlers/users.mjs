@@ -8,13 +8,25 @@ import {
   hashPassword,
   hashToken,
 } from "../utils/helpers.mjs";
-import jwt from "jsonwebtoken";
 
 const userColl = database.collection("users");
 const refreshTokenAge = 30 * 24 * 60 * 60 * 1000;
 
 export const retrieveUserData = async (req, res) => {
-  return res.status(200).send({ message: "hey" });
+  const {
+    userId,
+    query: { fields = [] },
+  } = req;
+  if (!userId) {
+    return res.status(400).send({ message: "Invalid user id" });
+  }
+  try {
+    const userProfile = await findUserById(userId, fields);
+    console.log("Retrieve User Data", userProfile);
+    return res.status(200).send({ message: "hey", user: userProfile });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const createUser = async (req, res) => {
@@ -44,21 +56,8 @@ export const createUser = async (req, res) => {
 
     const user = await findUserByEmail(email);
 
-    const accessToken = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: "60s" }
-    );
-
-    const refreshToken = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: "30d" }
-    );
+    const accessToken = generateAccessToken({ id: user._id });
+    const refreshToken = generateRefreshToken({ id: user._id }, "30d");
 
     const hashedRefreshToken = await hashToken(refreshToken);
 
@@ -87,7 +86,7 @@ export const createUser = async (req, res) => {
 
 export const newAccessToken = async (req, res) => {
   const { userId } = req.body;
-  console.log(req);
+  console.log("New access token: ", req.body, req.cookies["refreshToken"]);
   const refreshToken = req.cookies["refreshToken"];
   if (!refreshToken) {
     return res.status(401).send({ message: "Invalid refresh token" });
@@ -99,14 +98,29 @@ export const newAccessToken = async (req, res) => {
 
   const user = await findUserById(userId);
 
-  const accessToken = jwt.sign(
+  const accessToken = generateAccessToken({ id: user._id });
+  const newRefreshToken = generateRefreshToken({ id: user._id }, "30d");
+
+  const hashedRefreshToken = await hashToken(newRefreshToken);
+
+  const timestamp = getTimeUTC();
+
+  const updatedUser = await userColl.updateOne(
     {
-      id: user._id,
+      _id: userId,
     },
-    process.env.SECRET_KEY,
-    { expiresIn: "60s" }
+    {
+      $set: { refreshToken: hashedRefreshToken, updatedAt: timestamp },
+    }
   );
-  return res.status(200).send({ message: "Token given", accessToken });
+
+  return res
+    .status(200)
+    .cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      maxAge: refreshTokenAge,
+    })
+    .send({ message: "Token given", accessToken });
 };
 
 export const loginUser = async (req, res) => {
@@ -217,10 +231,21 @@ export const findUserByEmail = async (email) => {
   return foundUser;
 };
 
-export const findUserById = async (id) => {
-  const foundUser = await userColl.findOne({
-    _id: ObjectId.createFromHexString(id),
-  });
-  console.log("Found user by id: ", id, foundUser);
+export const findUserById = async (id, fields) => {
+  let retFields = {};
+  if (fields && fields.length > 0) {
+    let splitFields = fields.split(",");
+    for (let field of splitFields) {
+      retFields[field] = 1;
+    }
+  }
+
+  const foundUser = await userColl.findOne(
+    {
+      _id: ObjectId.createFromHexString(id),
+    },
+    { projection: retFields }
+  );
+  console.log("Found user by id: ", foundUser);
   return foundUser;
 };
