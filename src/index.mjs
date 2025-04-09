@@ -4,6 +4,7 @@ import routes from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
 // import { connectToDB } from "../config.mjs";
 import cors from "cors";
+import { AppError } from "./utils/errors.mjs";
 
 const app = express();
 
@@ -18,6 +19,16 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 
 app.use(routes);
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).send({ message: err.message });
+  }
+  return res
+    .status(500)
+    .send({ message: err.message || "Something went wrong" });
+});
 
 const PORT = process.env.PORT || 3001;
 

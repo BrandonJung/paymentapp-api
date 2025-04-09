@@ -58,3 +58,16 @@ export const generateTokens = async (
 
   return { accessToken, refreshToken, hashedRefreshToken };
 };
+
+export const validateRefreshToken = (refreshToken) => {
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.SECRET_KEY);
+    return { valid: true, expired: false, decoded };
+  } catch (err) {
+    return {
+      valid: false,
+      expired: err.name === "TokenExpiredError",
+      decoded: null,
+    };
+  }
+};

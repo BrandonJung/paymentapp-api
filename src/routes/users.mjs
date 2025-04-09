@@ -2,7 +2,6 @@ import { Router } from "express";
 import {
   createUser,
   deleteAllUsers,
-  getUserById,
   loginUser,
   logoutUser,
   newAccessToken,
@@ -22,7 +21,7 @@ router.get("/retrieveUserData", verifyCredentials, retrieveUserData);
 
 router.post("/newAccessToken", newAccessToken);
 
-router.delete("/deleteAllUsers", deleteAllUsers);
+router.delete("/deleteAllUsers", verifyCredentials, deleteAllUsers);
 
 router.get("/", (req, res) => {
   console.log(req.session.id);
