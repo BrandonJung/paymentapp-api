@@ -34,14 +34,14 @@ export const getTimeUTC = () => {
 };
 
 export const generateAccessToken = (payload = {}, expire = "60s") => {
-  const resToken = jwt.sign(payload, process.env.SECRET_KEY, {
+  const resToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET_KEY, {
     expiresIn: expire,
   });
   return resToken;
 };
 
 export const generateRefreshToken = (payload = {}, expire = "30d") => {
-  const resToken = jwt.sign(payload, process.env.SECRET_KEY, {
+  const resToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET_KEY, {
     expiresIn: expire,
   });
   return resToken;
@@ -61,7 +61,10 @@ export const generateTokens = async (
 
 export const validateRefreshToken = (refreshToken) => {
   try {
-    const decoded = jwt.verify(refreshToken, process.env.SECRET_KEY);
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET_KEY
+    );
     return { valid: true, expired: false, decoded };
   } catch (err) {
     return {

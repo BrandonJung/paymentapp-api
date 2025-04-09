@@ -2,12 +2,9 @@ import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import {
   comparePassword,
-  generateAccessToken,
-  generateRefreshToken,
   generateTokens,
   getTimeUTC,
   hashPassword,
-  hashToken,
   validateRefreshToken,
 } from "../utils/helpers.mjs";
 import {

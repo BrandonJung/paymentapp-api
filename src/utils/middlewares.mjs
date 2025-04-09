@@ -25,7 +25,7 @@ export const verifyCredentials = (req, res, next) => {
   console.log("Verifying credentials", authHeader);
   if (authHeader) {
     const token = authHeader.split(" ")[1];
-    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_KEY, (err, user) => {
       if (err) {
         return res.status(401).send({ message: "Token not valid" });
       }
