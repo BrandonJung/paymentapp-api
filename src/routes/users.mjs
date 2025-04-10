@@ -1,27 +1,23 @@
 import { Router } from "express";
 import {
   createAdminUser,
-  deleteAllUsers,
   loginUser,
   logoutUser,
   newAccessToken,
   retrieveUserData,
 } from "../handlers/users.mjs";
 import { verifyCredentials } from "../utils/middlewares.mjs";
+import { deleteAllUsers } from "../handlers/devFunctions.mjs";
 
 const router = Router();
 
 router.post("/create", createAdminUser);
-
 router.post("/login", loginUser);
-
 router.post("/logout", logoutUser);
-
 router.get("/user", verifyCredentials, retrieveUserData);
-
 router.post("/accessToken", newAccessToken);
 
-router.delete("/allUsers", verifyCredentials, deleteAllUsers);
+router.delete("/deleteAllUsers", verifyCredentials, deleteAllUsers);
 
 // router.get("/api/users/:id", getUserByIdHandler);
 

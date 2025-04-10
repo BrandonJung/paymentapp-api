@@ -74,3 +74,19 @@ export const validateRefreshToken = (refreshToken) => {
     };
   }
 };
+
+export const validateNewCustomer = (newCustomer) => {
+  return true;
+};
+
+export const validateNewLocation = (newLocation) => {
+  return true;
+};
+
+export const validateNewServices = (newServices) => {
+  return true;
+};
+
+export const validateNewDate = (newDate) => {
+  return true;
+};

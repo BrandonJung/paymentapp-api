@@ -60,6 +60,7 @@ export const createAdminUser = async (req, res, next) => {
       emailVerified: false,
       lastLogin: timestamp,
       roles: ["admin"],
+      active: true,
     };
 
     const { insertedId } = await userColl.insertOne(userObj);
@@ -232,18 +233,10 @@ export const logoutUser = async (req, res, next) => {
   }
 };
 
-export const deleteAllUsers = async (req, res) => {
-  try {
-    const deleteRes = await userColl.deleteMany({});
-    return res
-      .status(200)
-      .send({ message: "All users deleted", res: deleteRes });
-  } catch (err) {
-    console.log(err);
-  }
-};
-
 export const findUserByEmail = async (email, fields) => {
+  if (!email) {
+    return null;
+  }
   try {
     let retFields = {};
     if (fields && fields.length > 0) {
@@ -254,7 +247,7 @@ export const findUserByEmail = async (email, fields) => {
     }
 
     const foundUser = await userColl.findOne(
-      { email: email },
+      { email: email, roles: { $in: ["admin"] } },
       { projection: retFields }
     );
     console.log("Found user by email: ", email, foundUser);
@@ -265,7 +258,7 @@ export const findUserByEmail = async (email, fields) => {
 };
 
 export const findUserById = async (id, fields) => {
-  if (id.length !== 24) {
+  if (!id || id.length !== 24) {
     return null;
   }
   try {
@@ -280,6 +273,7 @@ export const findUserById = async (id, fields) => {
     const foundUser = await userColl.findOne(
       {
         _id: ObjectId.createFromHexString(id),
+        roles: { $in: ["admin"] },
       },
       { projection: retFields }
     );
