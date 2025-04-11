@@ -91,7 +91,12 @@ export const createAdminUser = async (req, res, next) => {
         httpOnly: true,
         maxAge: refreshTokenAge,
       })
-      .send({ messsage: "User created", userId: user._id, accessToken });
+      .send({
+        messsage: "User created",
+        userId: user._id,
+        accessToken,
+        userHasOrg: false,
+      });
   } catch (err) {
     console.log(err);
   }
@@ -184,13 +189,20 @@ export const loginUser = async (req, res, next) => {
       }
     );
 
+    const userHasOrg = user.organization.id ? true : false;
+
     return res
       .status(200)
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         maxAge: refreshTokenAge,
       })
-      .send({ message: "User logged in", userId: user._id, accessToken });
+      .send({
+        message: "User logged in",
+        userId: user._id,
+        accessToken,
+        userHasOrg,
+      });
   } catch (err) {
     console.log(err);
   }
