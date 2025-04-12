@@ -90,3 +90,8 @@ export const validateNewServices = (newServices) => {
 export const validateNewDate = (newDate) => {
   return true;
 };
+
+export const newValidityObject = (valid = true, message = "") => {
+  const ret = { valid, message };
+  return ret;
+};
