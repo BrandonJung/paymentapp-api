@@ -8,12 +8,52 @@ import {
   validateNewLocation,
   validateNewServices,
 } from "../utils/helpers.mjs";
-import { createLocation, findLocationById } from "./locations.mjs";
-import { createCustomer, findCustomerByEmail } from "./customers.mjs";
-import { createServices } from "./services.mjs";
+import {
+  createLocation,
+  findLocationById,
+  retrieveExistingLocations,
+} from "./locations.mjs";
+import {
+  createCustomer,
+  findCustomerByEmail,
+  retrieveExistingCustomers,
+} from "./customers.mjs";
+import { createServices, retrieveExistingServices } from "./services.mjs";
 import { findUserById } from "./users.mjs";
 
 const jobColl = database.collection("jobs");
+
+export const retrieveExistingData = async (req, res, next) => {
+  const { userId } = req;
+  if (!userId) {
+    return next(new BadRequestError("Invalid user id"));
+  }
+  try {
+    const user = await findUserById(userId);
+
+    if (!user) {
+      return next(new BadRequestError("User does not exist"));
+    }
+
+    const organizationId = user.organization?.id;
+
+    if (!organizationId) {
+      return next(new BadRequestError("Organization does not exist"));
+    }
+
+    const existingLocations = await retrieveExistingLocations(organizationId);
+
+    const existingServices = await retrieveExistingServices(organizationId);
+
+    const existingCustomers = await retrieveExistingCustomers(organizationId);
+
+    return res
+      .status(200)
+      .send({ existingCustomers, existingLocations, existingServices });
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 export const createJob = async (req, res, next) => {
   const { customer, userId, location, services, date, sendToCustomer } =
@@ -216,9 +256,15 @@ const findJobById = async (id, fields) => {
   }
   try {
     let retFields = {};
-    if (fields && fields.length > 0) {
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
       let splitFields = fields.split(",");
-      for (let field of splitFields) {
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
         retFields[field] = 1;
       }
     }

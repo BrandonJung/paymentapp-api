@@ -21,7 +21,7 @@ export const createLocation = async (
       address: { street, unitNumber, city, province, postalCode, country },
       search,
       organizationId,
-      belongsTo: customer.id,
+      belongsTo: customer._id,
       createdAt: timestamp,
       updatedAt: timestamp,
       createdBy: userId,
@@ -47,9 +47,15 @@ export const findLocationById = async (id, fields) => {
   }
   try {
     let retFields = {};
-    if (fields && fields.length > 0) {
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
       let splitFields = fields.split(",");
-      for (let field of splitFields) {
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
         retFields[field] = 1;
       }
     }
@@ -65,4 +71,20 @@ export const findLocationById = async (id, fields) => {
   } catch (err) {
     console.log(err);
   }
+};
+
+export const retrieveExistingLocations = async (orgId) => {
+  const orgIdIsValid = ObjectId.isValid(orgId);
+
+  if (!orgIdIsValid) {
+    return [];
+  }
+
+  const retLocations = await locationsColl
+    .find({
+      organizationId: orgId,
+      active: true,
+    })
+    .toArray();
+  return retLocations;
 };

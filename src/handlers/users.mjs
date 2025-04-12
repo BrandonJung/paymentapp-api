@@ -251,9 +251,15 @@ export const findUserByEmail = async (email, fields) => {
   }
   try {
     let retFields = {};
-    if (fields && fields.length > 0) {
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
       let splitFields = fields.split(",");
-      for (let field of splitFields) {
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
         retFields[field] = 1;
       }
     }
@@ -275,9 +281,15 @@ export const findUserById = async (id, fields) => {
   }
   try {
     let retFields = {};
-    if (fields && fields.length > 0) {
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
       let splitFields = fields.split(",");
-      for (let field of splitFields) {
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
         retFields[field] = 1;
       }
     }

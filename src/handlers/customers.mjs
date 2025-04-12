@@ -25,6 +25,7 @@ export const createCustomer = async (customer, organizationId, userId) => {
   const { firstName, lastName, email, phoneNumber } = customer;
   try {
     const username = `${firstName} ${lastName}`;
+    const label = `${username} - ${email}`;
     const timestamp = getTimeUTC();
     const customerObj = {
       firstName,
@@ -32,6 +33,7 @@ export const createCustomer = async (customer, organizationId, userId) => {
       email,
       phoneNumber,
       username,
+      label,
       createdAt: timestamp,
       updatedAt: timestamp,
       createdBy: userId,
@@ -65,9 +67,15 @@ const findCustomerById = async (id, fields) => {
   }
   try {
     let retFields = {};
-    if (fields && fields.length > 0) {
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
       let splitFields = fields.split(",");
-      for (let field of splitFields) {
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
         retFields[field] = 1;
       }
     }
@@ -91,9 +99,15 @@ export const findCustomerByEmail = async (email, fields) => {
   }
   try {
     let retFields = {};
-    if (fields && fields.length > 0) {
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
       let splitFields = fields.split(",");
-      for (let field of splitFields) {
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
         retFields[field] = 1;
       }
     }
@@ -109,9 +123,19 @@ export const findCustomerByEmail = async (email, fields) => {
   }
 };
 
-// user: {
-//       firstName: 'Test',
-//       lastName: 'Name3',
-//       email: 'test3@example.com',
-//       phoneNumber: '3333333333'
-//     },
+export const retrieveExistingCustomers = async (orgId) => {
+  const orgIdIsValid = ObjectId.isValid(orgId);
+
+  if (!orgIdIsValid) {
+    return [];
+  }
+
+  const retLocations = await userColl
+    .find({
+      organizationId: orgId,
+      active: true,
+      roles: { $in: ["customer"] },
+    })
+    .toArray();
+  return retLocations;
+};
