@@ -23,6 +23,50 @@ import { findUserById } from "./users.mjs";
 
 const jobColl = database.collection("jobs");
 
+export const retrieveActiveJobs = async (req, res, next) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return next(new BadRequestError("Invalid user id"));
+  }
+  try {
+    const user = await findUserById(userId);
+
+    if (!user) {
+      return next(new BadRequestError("User does not exist"));
+    }
+
+    const organizationId = user.organization?.id;
+
+    if (!organizationId) {
+      return next(new BadRequestError("Organization does not exist"));
+    }
+
+    const retrievedJobs = await jobColl
+      .find({
+        organizationId: organizationId,
+        archived: false,
+      })
+      .toArray();
+
+    const groups = {};
+
+    retrievedJobs.map((job) => {
+      const statusCode = job.statusCode;
+      if (statusCode > 99 && statusCode < 1000) {
+        const firstDigit = Math.floor(statusCode / 100);
+        if (!groups[firstDigit]) {
+          groups[firstDigit] = [];
+        }
+        groups[firstDigit].push(job);
+      }
+    });
+
+    return res.status(200).send({ jobs: groups });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 export const retrieveExistingData = async (req, res, next) => {
   const { userId } = req;
   if (!userId) {
@@ -185,7 +229,7 @@ const createJobObj = (
     createdBy: userId,
     createdAt: timestamp,
     updatedAt: timestamp,
-    statusCode: 0,
+    statusCode: 100,
     subTotal,
     taxAndFeesTotal,
     totalPrice,
@@ -281,145 +325,3 @@ const findJobById = async (id, fields) => {
     console.log(err);
   }
 };
-// Sent to me
-// {
-//     user: {
-//       firstName: 'Test',
-//       lastName: 'Name3',
-//       email: 'test3@example.com',
-//       phoneNumber: '3333333333'
-//     },
-//     location: {
-//       street: '1111 Random Street',
-//       unitNumber: 4,
-//       city: 'Burnaby',
-//       province: 'BC',
-//       postalCode: 'A1A 2B2',
-//       country: 'Canada'
-//     },
-//     services: [
-//       {
-//         name: 'Cleaning',
-//         description: 'Big cleaning',
-//         taxAndFees: [Array],
-//         quantity: 1,
-//         price: 2125,
-//         rate: 'flat'
-//       }
-//     ],
-//     date: {
-//       mode: 'multi',
-//       startDate: '2025-04-24T06:21:06.347Z',
-//       endDate: '2025-04-20T06:21:11.710Z'
-//     },
-//     userId: ''
-//     sendToUser: true
-//   }
-
-// in the DB
-// {
-//     user: {
-//       id: customerId
-//       firstName: 'Test',
-//       lastName: 'Name3',
-//       username: 'Test Name3'
-//       email: 'test3@example.com',
-//       phoneNumber: '3333333333'
-//       createdAt
-//       updatedAt
-//       role: ['customer']
-//       organizationId: organizationId
-//       address: addressId
-//     },
-//       id: addressId
-//       organizationId: organizationId,
-//       belongsTo: customerId,
-//       addresses: [locations]
-//     location: {
-//       street: '1111 Random Street',
-//       unitNumber: 4,
-//       city: 'Burnaby',
-//       province: 'BC',
-//       postalCode: 'A1A 2B2',
-//       country: 'Canada'
-//       search: '1111 Random Street, Burnaby, BC'
-//     },
-//     id: serviceId
-//     organizationId: organizationId,
-//     services: [services]
-//      services: [
-//       {
-//         name: 'Cleaning',
-//         description: 'Big cleaning',
-//         taxAndFees: [Array],
-//         quantity: 1,
-//         price: 2125,
-//         rate: 'flat'
-//       }
-//     ],
-//     date: {
-//       mode: 'multi',
-//       startDate: '2025-04-24T06:21:06.347Z',
-//       endDate: '2025-04-20T06:21:11.710Z'
-//     },
-//     sendToUser: true
-//   }
-
-// const organization = {
-//     id,
-//     logo,
-//     name,
-//     createdBy,
-//     createdAt,
-//     updatedAt,
-//     updatedBy,
-//     taxAndFeeRates: [],
-//     tag,
-// }
-
-// Job Document:
-// const jobDocument = {
-//     id,
-//     organizationId,
-//     createdBy,
-//     createdAt,
-//     updatedAt,
-//     statusCode: 0,
-//     subtotal,
-//     taxAndFeesTotal,
-//     totalPrice,
-//     invoiceNumber,
-//     customer: {
-//         customerId,
-//         firstName,
-//         lastName,
-//         username,
-//         email,
-//         phoneNumber
-//     },
-//     location: {
-//         street,
-//         unitNumber,
-//         city,
-//         province,
-//         postalCode,
-//         country
-//     },
-//     services: [
-//         {
-//             name,
-//             description,
-//             taxAndFees: [],
-//             quantity,
-//             price,
-//             rate
-//             total
-//         }
-//     ],
-//     date: {
-//         mode,
-//         startDate,
-//         endDate
-//     },
-//     emailSentToUser
-// }
