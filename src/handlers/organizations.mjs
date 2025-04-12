@@ -27,13 +27,15 @@ export const createOrganization = async (req, res, next) => {
 
     const tag = createOrgTag(orgName, orgTag);
 
+    const taxAndFeeRates = createTaxAndFeeRates(orgTaxAndFeeRates);
+
     const orgObj = {
       name: orgName,
       createdBy: userId,
       createdAt: timestamp,
       updatedAt: timestamp,
       updatedBy: userId,
-      taxAndFeeRates: [],
+      taxAndFeeRates: taxAndFeeRates,
       tag,
     };
 
@@ -84,7 +86,7 @@ const validateTaxAndFeeFields = (taxAndFeeObj) => {
     return newValidityObject(false, "Invalid name");
   } else if (!taxAndFeeObj.type) {
     return newValidityObject(false, "No type chosen");
-  } else if (taxAndFeeObj.type !== "tax" && taxAndFeeObj.type !== "fee") {
+  } else if (taxAndFeeObj.type !== "percent" && taxAndFeeObj.type !== "flat") {
     return newValidityObject(false, "Invalid type");
   } else if (taxAndFeeObj.amount < 0) {
     return newValidityObject(false, "Must be greater than 0");
@@ -100,4 +102,13 @@ const createOrgTag = (name, tag) => {
     const resTag = `${name.trim().slice(0, 3).toUpperCase()}`;
     return resTag;
   }
+};
+
+const createTaxAndFeeRates = (taxAndFeeRates) => {
+  let resTaxAndFeeRates = [...taxAndFeeRates];
+  resTaxAndFeeRates.map((tf) => {
+    tf.code = tf.name.toLowerCase();
+    delete tf.id;
+  });
+  return resTaxAndFeeRates;
 };
