@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import { BadRequestError, NotFoundError } from "../utils/errors.mjs";
 import {
+  createDateObj,
   getTimeUTC,
   validateNewCustomer,
   validateNewDate,
@@ -172,13 +173,22 @@ export const createJob = async (req, res, next) => {
       return next(new BadRequestError("Creating services error"));
     }
 
+    const startDateObj = createDateObj(date.startDate);
+    const endDateObj = createDateObj(date.endDate);
+
+    const newDateObj = {
+      mode: date.mode,
+      startDate: startDateObj,
+      endDate: endDateObj,
+    };
+
     const jobObj = createJobObj(
       customerObj,
       userId,
       organization,
       locationObj,
       services,
-      date
+      newDateObj
     );
 
     const { insertedId } = await jobColl.insertOne(jobObj);
@@ -283,7 +293,8 @@ const createDateJobObj = (date) => {
 };
 
 const createInvoiceNumber = (tag) => {
-  return tag;
+  const timestamp = Date.now().toString(36); // base36 encoding
+  return `${tag}-${timestamp.toUpperCase()}`;
 };
 
 const calculateInvoiceTotals = (services, taxAndFeeRates) => {

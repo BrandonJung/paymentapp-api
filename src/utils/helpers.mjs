@@ -95,3 +95,19 @@ export const newValidityObject = (valid = true, message = "") => {
   const ret = { valid, message };
   return ret;
 };
+
+export const createDateObj = (passedDate) => {
+  if (!passedDate || passedDate === "") {
+    return {};
+  }
+  const date = new Date(passedDate);
+
+  const utcString = date.toUTCString();
+
+  const dateString = date.toDateString();
+
+  return {
+    utc: utcString,
+    display: dateString,
+  };
+};
