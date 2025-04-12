@@ -108,6 +108,6 @@ export const createDateObj = (passedDate) => {
 
   return {
     utc: utcString,
-    display: dateString,
+    dateString,
   };
 };
