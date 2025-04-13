@@ -37,7 +37,11 @@ export const createLocation = async (
   }
 };
 
-export const updateOldLocation = async (locationId, updatedLocation) => {
+export const updateOldLocation = async (
+  locationId,
+  updatedLocation,
+  userId
+) => {
   if (!locationId) {
     return null;
   }
@@ -45,11 +49,13 @@ export const updateOldLocation = async (locationId, updatedLocation) => {
   const newLocation = { ...updatedLocation };
   delete newLocation._id;
 
+  const timestamp = getTimeUTC();
+
   await locationsColl.updateOne(
     {
       _id: locationId,
     },
-    { $set: newLocation }
+    { $set: { ...newLocation, updatedBy: userId, updatedAt: timestamp } }
   );
 
   const updatedLocationRes = await locationsColl.find({

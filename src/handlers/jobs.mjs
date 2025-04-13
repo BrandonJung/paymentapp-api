@@ -149,7 +149,8 @@ export const createJob = async (req, res, next) => {
     if (customerRes) {
       const updatedCustomerRes = await updateOldCustomer(
         customerRes._id,
-        customer
+        customer,
+        userId
       );
       customerObj = updatedCustomerRes;
     } else {
@@ -167,7 +168,8 @@ export const createJob = async (req, res, next) => {
     if (locationRes) {
       const updatedLocationRes = await updateOldLocation(
         locationRes._id,
-        location
+        location,
+        userId
       );
       locationObj = updatedLocationRes;
     } else {

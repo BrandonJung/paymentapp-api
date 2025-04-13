@@ -25,11 +25,13 @@ export const updateOldCustomer = async (customerId, updatedCustomer) => {
   const newCustomer = { ...updatedCustomer };
   delete newCustomer._id;
 
+  const timestamp = getTimeUTC();
+
   await userColl.updateOne(
     {
       _id: customerId,
     },
-    { $set: newCustomer }
+    { $set: { ...newCustomer, updatedAt: timestamp, updatedBy: userId } }
   );
 
   const updatedCustomerRes = await userColl.find({
