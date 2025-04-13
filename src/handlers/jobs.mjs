@@ -24,6 +24,14 @@ import { findUserById } from "./users.mjs";
 
 const jobColl = database.collection("jobs");
 
+export const emailUserJob = async (req, res, next) => {};
+
+export const sendJobInvoice = async (req, res, next) => {};
+
+export const payJobInvoice = async (req, res, next) => {};
+
+export const archiveJob = async (req, res, next) => {};
+
 export const retrieveActiveJobs = async (req, res, next) => {
   const { userId } = req.query;
   if (!userId) {
