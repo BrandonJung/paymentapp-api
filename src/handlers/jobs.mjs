@@ -13,11 +13,13 @@ import {
   createLocation,
   findLocationById,
   retrieveExistingLocations,
+  updateOldLocation,
 } from "./locations.mjs";
 import {
   createCustomer,
   findCustomerByEmail,
   retrieveExistingCustomers,
+  updateOldCustomer,
 } from "./customers.mjs";
 import { createServices, retrieveExistingServices } from "./services.mjs";
 import { findUserById } from "./users.mjs";
@@ -145,7 +147,11 @@ export const createJob = async (req, res, next) => {
 
     let customerObj;
     if (customerRes) {
-      customerObj = customerRes;
+      const updatedCustomerRes = await updateOldCustomer(
+        customerRes._id,
+        customer
+      );
+      customerObj = updatedCustomerRes;
     } else {
       const newCustomerObj = await createCustomer(
         customer,
@@ -159,7 +165,11 @@ export const createJob = async (req, res, next) => {
 
     let locationObj;
     if (locationRes) {
-      locationObj = locationRes;
+      const updatedLocationRes = await updateOldLocation(
+        locationRes._id,
+        location
+      );
+      locationObj = updatedLocationRes;
     } else {
       const newLocationObj = await createLocation(
         location,
@@ -185,7 +195,7 @@ export const createJob = async (req, res, next) => {
     const endDateObj = createDateObj(date.endDate);
 
     const newDateObj = {
-      mode: date.mode,
+      type: date.type,
       startDate: startDateObj,
       endDate: endDateObj,
     };
@@ -291,9 +301,9 @@ const createServicesJobArray = (services) => {
 };
 
 const createDateJobObj = (date) => {
-  const { mode, startDate, endDate } = date;
+  const { type, startDate, endDate } = date;
   const retObj = {
-    mode,
+    type,
     startDate,
     endDate,
   };

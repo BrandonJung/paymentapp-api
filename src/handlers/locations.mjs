@@ -37,6 +37,28 @@ export const createLocation = async (
   }
 };
 
+export const updateOldLocation = async (locationId, updatedLocation) => {
+  if (!locationId) {
+    return null;
+  }
+
+  const newLocation = { ...updatedLocation };
+  delete newLocation._id;
+
+  await locationsColl.updateOne(
+    {
+      _id: locationId,
+    },
+    { $set: newLocation }
+  );
+
+  const updatedLocationRes = await locationsColl.find({
+    _id: locationId,
+  });
+
+  return updatedLocationRes;
+};
+
 export const findLocationById = async (id, fields) => {
   if (!id) {
     return null;

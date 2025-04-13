@@ -17,6 +17,29 @@ export const updateCustomer = async (req, res, next) => {
   return res.send({ message: "Update entire customer" });
 };
 
+export const updateOldCustomer = async (customerId, updatedCustomer) => {
+  if (!customerId) {
+    return null;
+  }
+
+  const newCustomer = { ...updatedCustomer };
+  delete newCustomer._id;
+
+  await userColl.updateOne(
+    {
+      _id: customerId,
+    },
+    { $set: newCustomer }
+  );
+
+  const updatedCustomerRes = await userColl.find({
+    _id: customerId,
+    roles: { $in: ["customer"] },
+  });
+
+  return updatedCustomerRes;
+};
+
 export const updateCustomerFields = async (req, res, next) => {
   return res.send({ message: "Update customer fields" });
 };

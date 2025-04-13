@@ -7,7 +7,7 @@ const servicesColl = database.collection("services");
 export const createServices = async (
   services,
   organizationId,
-  taxAndFeeRates,
+  orgTaxAndFeeRates,
   userId
 ) => {
   try {
@@ -15,15 +15,16 @@ export const createServices = async (
     let serviceToUpdate = [];
     const timestamp = getTimeUTC();
     for (let service of services) {
-      const { _id, name, description, taxAndFees, quantity, price, rate } =
+      const { _id, name, description, taxesAndFees, quantity, price, rate } =
         service;
-      const searchName = `${name} - $${price / 100}`;
+      const backendPrice = price * 100;
+      const searchName = `${name} - $${backendPrice / 100}`;
       const serviceObj = {
         name,
         description,
-        taxAndFees,
+        taxesAndFees,
         quantity,
-        price,
+        price: backendPrice,
         rate,
         organizationId,
         createdBy: userId,
@@ -74,4 +75,40 @@ export const retrieveExistingServices = async (orgId) => {
     })
     .toArray();
   return retLocations;
+};
+
+export const findServiceById = async (id, fields) => {
+  if (!id) {
+    return null;
+  }
+  const idString = id.toString();
+  if (idString.length !== 24) {
+    return null;
+  }
+  try {
+    let retFields = {};
+    let fieldsArray;
+    if (fields && Array.isArray(fields)) {
+      fieldsArray = fields;
+    } else if (fields) {
+      let splitFields = fields.split(",");
+      fieldsArray = splitFields;
+    }
+    if (fields) {
+      for (let field of fieldsArray) {
+        retFields[field] = 1;
+      }
+    }
+
+    const foundService = await servicesColl.findOne(
+      {
+        _id: ObjectId.createFromHexString(idString),
+      },
+      { projection: retFields }
+    );
+    console.log("Found service by id: ", foundService);
+    return foundService;
+  } catch (err) {
+    console.log(err);
+  }
 };
