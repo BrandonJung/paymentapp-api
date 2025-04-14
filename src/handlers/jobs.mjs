@@ -54,7 +54,7 @@ export const retrieveActiveJobs = async (req, res, next) => {
 
     const retrievedJobs = await jobColl
       .find({
-        organizationId: organizationId,
+        organizationId: ObjectId.createFromHexString(organizationId),
         archived: false,
       })
       .toArray();

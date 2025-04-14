@@ -14,9 +14,7 @@ export const createLocation = async (
   try {
     const timestamp = getTimeUTC();
 
-    const search = `${
-      unitNumber === "" ? "" : `${unitNumber} - `
-    }${street}, ${province}, ${country}`;
+    const newSearch = createSearchString(location);
     const locationObj = {
       address: { street, unitNumber, city, province, postalCode, country },
       search,
@@ -48,6 +46,7 @@ export const updateOldLocation = async (
 
   const newLocation = { ...updatedLocation };
   delete newLocation._id;
+  const newSearch = createSearchString(newLocation);
 
   const timestamp = getTimeUTC();
 
@@ -55,7 +54,14 @@ export const updateOldLocation = async (
     {
       _id: locationId,
     },
-    { $set: { ...newLocation, updatedBy: userId, updatedAt: timestamp } }
+    {
+      $set: {
+        address: newLocation,
+        search: newSearch,
+        updatedBy: userId,
+        updatedAt: timestamp,
+      },
+    }
   );
 
   const updatedLocationRes = await locationsColl.findOne({
@@ -102,17 +108,22 @@ export const findLocationById = async (id, fields) => {
 };
 
 export const retrieveExistingLocations = async (orgId) => {
-  const orgIdIsValid = ObjectId.isValid(orgId);
-
-  if (!orgIdIsValid) {
+  if (!orgId) {
     return [];
   }
 
   const retLocations = await locationsColl
     .find({
-      organizationId: orgId,
+      organizationId: ObjectId.createFromHexString(orgId),
       active: true,
     })
     .toArray();
   return retLocations;
+};
+
+export const createSearchString = (address) => {
+  const { unitNumber, street, city, province } = address;
+  return `${
+    unitNumber === "" ? "" : `${unitNumber} - `
+  }${street}, ${city}, ${province}`;
 };

@@ -27,6 +27,9 @@ export const updateOldCustomer = async (
   }
 
   const newCustomer = { ...updatedCustomer };
+
+  const username = `${newCustomer.firstName} ${newCustomer.lastName}`;
+  const label = `${username} - ${newCustomer.email}`;
   delete newCustomer._id;
 
   const timestamp = getTimeUTC();
@@ -35,7 +38,15 @@ export const updateOldCustomer = async (
     {
       _id: customerId,
     },
-    { $set: { ...newCustomer, updatedAt: timestamp, updatedBy: userId } }
+    {
+      $set: {
+        ...newCustomer,
+        username,
+        label,
+        updatedAt: timestamp,
+        updatedBy: userId,
+      },
+    }
   );
 
   const updatedCustomerRes = await customerColl.findOne({
@@ -151,15 +162,13 @@ export const findCustomerByEmail = async (email, fields) => {
 };
 
 export const retrieveExistingCustomers = async (orgId) => {
-  const orgIdIsValid = ObjectId.isValid(orgId);
-
-  if (!orgIdIsValid) {
+  if (!orgId) {
     return [];
   }
 
   const retLocations = await customerColl
     .find({
-      organizationId: orgId,
+      organizationId: ObjectId.createFromHexString(orgId),
       active: true,
     })
     .toArray();

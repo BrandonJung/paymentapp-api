@@ -62,15 +62,13 @@ export const createServices = async (
 };
 
 export const retrieveExistingServices = async (orgId) => {
-  const orgIdIsValid = ObjectId.isValid(orgId);
-
-  if (!orgIdIsValid) {
+  if (!orgId) {
     return [];
   }
 
   const retLocations = await servicesColl
     .find({
-      organizationId: orgId,
+      organizationId: ObjectId.createFromHexString(orgId),
       active: true,
     })
     .toArray();
