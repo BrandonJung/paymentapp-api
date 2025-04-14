@@ -99,6 +99,7 @@ export const createAdminUser = async (req, res, next) => {
       });
   } catch (err) {
     console.log(err);
+    return res.status(400).send({ message: "Email already used" });
   }
 };
 
@@ -189,7 +190,7 @@ export const loginUser = async (req, res, next) => {
       }
     );
 
-    const userHasOrg = user.organization.id ? true : false;
+    const userHasOrg = user?.organization?.id ? true : false;
 
     return res
       .status(200)

@@ -3,7 +3,7 @@ import { database } from "../../config.mjs";
 import { getTimeUTC } from "../utils/helpers.mjs";
 import { NotFoundError } from "../utils/errors.mjs";
 
-const userColl = database.collection("users");
+const customerColl = database.collection("customers");
 
 export const retrieveCustomer = async (req, res, next) => {
   return res.send({ message: "Retrieve customer" });
@@ -17,7 +17,11 @@ export const updateCustomer = async (req, res, next) => {
   return res.send({ message: "Update entire customer" });
 };
 
-export const updateOldCustomer = async (customerId, updatedCustomer) => {
+export const updateOldCustomer = async (
+  customerId,
+  updatedCustomer,
+  userId
+) => {
   if (!customerId) {
     return null;
   }
@@ -27,16 +31,15 @@ export const updateOldCustomer = async (customerId, updatedCustomer) => {
 
   const timestamp = getTimeUTC();
 
-  await userColl.updateOne(
+  await customerColl.updateOne(
     {
       _id: customerId,
     },
     { $set: { ...newCustomer, updatedAt: timestamp, updatedBy: userId } }
   );
 
-  const updatedCustomerRes = await userColl.find({
+  const updatedCustomerRes = await customerColl.find({
     _id: customerId,
-    roles: { $in: ["customer"] },
   });
 
   return updatedCustomerRes;
@@ -63,12 +66,11 @@ export const createCustomer = async (customer, organizationId, userId) => {
       updatedAt: timestamp,
       createdBy: userId,
       updatedBy: userId,
-      roles: ["customer"],
       organizationId,
       active: true,
     };
 
-    const { insertedId } = await userColl.insertOne(customerObj);
+    const { insertedId } = await customerColl.insertOne(customerObj);
 
     const customerRes = await findCustomerById(insertedId);
 
@@ -105,7 +107,7 @@ const findCustomerById = async (id, fields) => {
       }
     }
 
-    const foundCustomer = await userColl.findOne(
+    const foundCustomer = await customerColl.findOne(
       {
         _id: ObjectId.createFromHexString(idString),
       },
@@ -137,8 +139,8 @@ export const findCustomerByEmail = async (email, fields) => {
       }
     }
 
-    const foundCustomer = await userColl.findOne(
-      { email: email, roles: { $in: ["customer"] } },
+    const foundCustomer = await customerColl.findOne(
+      { email: email },
       { projection: retFields }
     );
     console.log("Found customer by email: ", email, foundCustomer);
@@ -155,11 +157,10 @@ export const retrieveExistingCustomers = async (orgId) => {
     return [];
   }
 
-  const retLocations = await userColl
+  const retLocations = await customerColl
     .find({
       organizationId: orgId,
       active: true,
-      roles: { $in: ["customer"] },
     })
     .toArray();
   return retLocations;

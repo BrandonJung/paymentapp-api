@@ -18,8 +18,16 @@ const client = new MongoClient(connectionString);
 
 let connection;
 
+export const initializeIndexes = async (db) => {
+  await db.collection("users").createIndex({ email: 1 }, { unique: true });
+  await db.collection("customers").createIndex({ email: 1 }, { unique: true });
+  console.log("Indexes initialized");
+};
+
 try {
   connection = await client.connect();
+  const db = connection.db(process.env.NODE_ENV);
+  await initializeIndexes(db);
 } catch (e) {
   console.log(e);
 }

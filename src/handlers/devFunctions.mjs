@@ -1,6 +1,7 @@
 import { database } from "../../config.mjs";
 
 const userColl = database.collection("users");
+const customerColl = database.collection("customers");
 const jobColl = database.collection("jobs");
 const locationColl = database.collection("locations");
 const orgColl = database.collection("organizations");
@@ -8,9 +9,7 @@ const serviceColl = database.collection("services");
 
 export const deleteAllCustomers = async (req, res) => {
   try {
-    const deleteRes = await userColl.deleteMany({
-      roles: { $in: ["customer"] },
-    });
+    const deleteRes = await customerColl.deleteMany({});
     return res
       .status(200)
       .send({ message: "All customers deleted", res: deleteRes });

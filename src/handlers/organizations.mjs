@@ -21,10 +21,13 @@ export const retrieveOrganization = async (req, res, next) => {
     }
 
     if (!user.organization) {
-      return next(new NotFoundError("Organization does not exist"));
+      return next(new NotFoundError("No organization on this user"));
     }
 
     const organization = await findOrganizationById(user.organization.id);
+    if (!organization) {
+      return next(new NotFoundError("Organization does not exist"));
+    }
 
     const { name, tag, taxesAndFeeRates, _id } = organization;
 
