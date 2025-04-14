@@ -58,7 +58,7 @@ export const updateOldLocation = async (
     { $set: { ...newLocation, updatedBy: userId, updatedAt: timestamp } }
   );
 
-  const updatedLocationRes = await locationsColl.find({
+  const updatedLocationRes = await locationsColl.findOne({
     _id: locationId,
   });
 

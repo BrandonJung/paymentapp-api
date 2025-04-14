@@ -38,7 +38,7 @@ export const updateOldCustomer = async (
     { $set: { ...newCustomer, updatedAt: timestamp, updatedBy: userId } }
   );
 
-  const updatedCustomerRes = await customerColl.find({
+  const updatedCustomerRes = await customerColl.findOne({
     _id: customerId,
   });
 

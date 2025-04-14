@@ -2,9 +2,8 @@ import "dotenv/config";
 import express from "express";
 import routes from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
-// import { connectToDB } from "../config.mjs";
 import cors from "cors";
-import { AppError } from "./utils/errors.mjs";
+import { errorHandler } from "./utils/helpers.mjs";
 
 const app = express();
 
@@ -20,19 +19,10 @@ app.use(cors(corsOptions));
 
 app.use(routes);
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).send({ message: err.message });
-  }
-  return res
-    .status(500)
-    .send({ message: err.message || "Something went wrong" });
-});
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Running on Port ${PORT}`);
-  // connectToDB();
 });

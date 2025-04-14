@@ -111,3 +111,10 @@ export const createDateObj = (passedDate) => {
     dateString,
   };
 };
+
+export const errorHandler = (err, req, res, next) => {
+  console.log(`Error: ${req.method} ${req.originalUrl}`, err);
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(statusCode).send({ message });
+};

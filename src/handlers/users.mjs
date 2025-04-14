@@ -98,8 +98,7 @@ export const createAdminUser = async (req, res, next) => {
         userHasOrg: false,
       });
   } catch (err) {
-    console.log(err);
-    return res.status(400).send({ message: "Email already used" });
+    next(err);
   }
 };
 

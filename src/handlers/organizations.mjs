@@ -96,7 +96,7 @@ export const createOrganization = async (req, res, next) => {
           $set: {
             organization: {
               id: insertedId,
-              tag,
+              tag: orgTag,
             },
           },
         }
@@ -127,18 +127,33 @@ export const updateOrganizationField = async (fields) => {
   }
 
   const timestamp = getTimeUTC();
-
   await orgColl.updateOne(
     {
       _id: ObjectId.createFromHexString(_id),
     },
     {
       $set: {
-        name: name,
-        tag: tag,
+        name,
+        tag,
         taxesAndFeeRates: taxesAndFees,
         updatedAt: timestamp,
         updatedBy: userId,
+      },
+    }
+  );
+
+  await userColl.updateOne(
+    {
+      _id: ObjectId.createFromHexString(userId),
+    },
+    {
+      $set: {
+        updatedAt: timestamp,
+        updatedBy: userId,
+        organization: {
+          id: _id,
+          tag: tag,
+        },
       },
     }
   );
