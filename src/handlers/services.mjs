@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import { getTimeUTC } from "../utils/helpers.mjs";
 
@@ -27,8 +26,9 @@ export const createServices = async (
         price: backendPrice,
         rate,
         organizationId,
-        createdBy: userId,
-        updatedBy: userId,
+        createdBy: ensureObjectId(userId),
+        createdAt: timestamp,
+        updatedBy: ensureObjectId(userId),
         updatedAt: timestamp,
         active: true,
         search: searchName,
@@ -68,7 +68,7 @@ export const retrieveExistingServices = async (orgId) => {
 
   const retLocations = await servicesColl
     .find({
-      organizationId: ObjectId.createFromHexString(orgId),
+      organizationId: ensureObjectId(orgId),
       active: true,
     })
     .toArray();
@@ -100,7 +100,7 @@ export const findServiceById = async (id, fields) => {
 
     const foundService = await servicesColl.findOne(
       {
-        _id: ObjectId.createFromHexString(idString),
+        _id: ensureObjectId(idString),
       },
       { projection: retFields }
     );

@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 
 const saltRounds = 10;
 
@@ -117,4 +118,12 @@ export const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
   res.status(statusCode).send({ message });
+};
+
+export const ensureObjectId = (id) => {
+  if (typeof id === "string") {
+    return ObjectId.createFromHexString(id);
+  } else {
+    return id;
+  }
 };

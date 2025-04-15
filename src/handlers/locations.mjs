@@ -1,6 +1,5 @@
-import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
-import { getTimeUTC } from "../utils/helpers.mjs";
+import { ensureObjectId, getTimeUTC } from "../utils/helpers.mjs";
 
 const locationsColl = database.collection("locations");
 
@@ -19,11 +18,11 @@ export const createLocation = async (
       address: { street, unitNumber, city, province, postalCode, country },
       search,
       organizationId,
-      belongsTo: customer._id,
+      belongsTo: ensureObjectId(customer._id),
       createdAt: timestamp,
       updatedAt: timestamp,
-      createdBy: userId,
-      updatedBy: userId,
+      createdBy: ensureObjectId(userId),
+      updatedBy: ensureObjectId(userId),
       active: true,
     };
 
@@ -52,20 +51,20 @@ export const updateOldLocation = async (
 
   await locationsColl.updateOne(
     {
-      _id: locationId,
+      _id: ensureObjectId(locationId),
     },
     {
       $set: {
         address: newLocation,
         search: newSearch,
-        updatedBy: userId,
+        updatedBy: ensureObjectId(userId),
         updatedAt: timestamp,
       },
     }
   );
 
   const updatedLocationRes = await locationsColl.findOne({
-    _id: locationId,
+    _id: ensureObjectId(locationId),
   });
 
   return updatedLocationRes;
@@ -96,7 +95,7 @@ export const findLocationById = async (id, fields) => {
 
     const foundLocation = await locationsColl.findOne(
       {
-        _id: ObjectId.createFromHexString(idString),
+        _id: ensureObjectId(idString),
       },
       { projection: retFields }
     );
@@ -114,7 +113,7 @@ export const retrieveExistingLocations = async (orgId) => {
 
   const retLocations = await locationsColl
     .find({
-      organizationId: ObjectId.createFromHexString(orgId),
+      organizationId: ensureObjectId(orgId),
       active: true,
     })
     .toArray();

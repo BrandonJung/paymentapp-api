@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import { BadRequestError, NotFoundError } from "../utils/errors.mjs";
 import { getTimeUTC, newValidityObject } from "../utils/helpers.mjs";
@@ -78,10 +77,10 @@ export const createOrganization = async (req, res, next) => {
 
       const orgObj = {
         name,
-        createdBy: userId,
+        createdBy: ensureObjectId(userId),
         createdAt: timestamp,
         updatedAt: timestamp,
-        updatedBy: userId,
+        updatedBy: ensureObjectId(userId),
         taxesAndFeeRates: taxAndFeeRates,
         tag: orgTag,
       };
@@ -90,12 +89,12 @@ export const createOrganization = async (req, res, next) => {
 
       await userColl.updateOne(
         {
-          _id: user._id,
+          _id: ensureObjectId(user._id),
         },
         {
           $set: {
             organization: {
-              id: insertedId,
+              id: ensureObjectId(insertedId),
               tag: orgTag,
             },
           },
@@ -108,7 +107,7 @@ export const createOrganization = async (req, res, next) => {
       details: {
         name: organizationRes.name,
         tag: organizationRes.tag,
-        _id: organizationRes._id,
+        _id: ensureObjectId(organizationRes._id),
       },
       taxesAndFeeRates: organizationRes.taxesAndFeeRates,
     };
@@ -129,7 +128,7 @@ export const updateOrganizationField = async (fields) => {
   const timestamp = getTimeUTC();
   await orgColl.updateOne(
     {
-      _id: ObjectId.createFromHexString(_id),
+      _id: ensureObjectId(_id),
     },
     {
       $set: {
@@ -137,19 +136,19 @@ export const updateOrganizationField = async (fields) => {
         tag,
         taxesAndFeeRates: taxesAndFees,
         updatedAt: timestamp,
-        updatedBy: userId,
+        updatedBy: ensureObjectId(userId),
       },
     }
   );
 
   await userColl.updateOne(
     {
-      _id: ObjectId.createFromHexString(userId),
+      _id: ensureObjectId(userId),
     },
     {
       $set: {
         updatedAt: timestamp,
-        updatedBy: userId,
+        updatedBy: ensureObjectId(userId),
         organization: {
           id: _id,
           tag: tag,
@@ -239,7 +238,7 @@ const findOrganizationById = async (id, fields) => {
 
     const foundOrg = await orgColl.findOne(
       {
-        _id: ObjectId.createFromHexString(idString),
+        _id: ensureObjectId(idString),
       },
       { projection: retFields }
     );

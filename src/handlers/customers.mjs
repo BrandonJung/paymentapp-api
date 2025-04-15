@@ -1,6 +1,5 @@
-import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
-import { getTimeUTC } from "../utils/helpers.mjs";
+import { ensureObjectId, getTimeUTC } from "../utils/helpers.mjs";
 import { NotFoundError } from "../utils/errors.mjs";
 
 const customerColl = database.collection("customers");
@@ -44,13 +43,13 @@ export const updateOldCustomer = async (
         username,
         label,
         updatedAt: timestamp,
-        updatedBy: userId,
+        updatedBy: ensureObjectId(userId),
       },
     }
   );
 
   const updatedCustomerRes = await customerColl.findOne({
-    _id: customerId,
+    _id: ensureObjectId(customerId),
   });
 
   return updatedCustomerRes;
@@ -75,8 +74,8 @@ export const createCustomer = async (customer, organizationId, userId) => {
       label,
       createdAt: timestamp,
       updatedAt: timestamp,
-      createdBy: userId,
-      updatedBy: userId,
+      createdBy: ensureObjectId(userId),
+      updatedBy: ensureObjectId(userId),
       organizationId,
       active: true,
     };
@@ -96,6 +95,7 @@ export const createCustomer = async (customer, organizationId, userId) => {
 };
 
 const findCustomerById = async (id, fields) => {
+  // Id should be hex string or ObjectId
   if (!id) {
     return null;
   }
@@ -120,7 +120,7 @@ const findCustomerById = async (id, fields) => {
 
     const foundCustomer = await customerColl.findOne(
       {
-        _id: ObjectId.createFromHexString(idString),
+        _id: ensureObjectId(idString),
       },
       { projection: retFields }
     );
@@ -162,13 +162,14 @@ export const findCustomerByEmail = async (email, fields) => {
 };
 
 export const retrieveExistingCustomers = async (orgId) => {
+  // OrgId can be hex string or ObjectId
   if (!orgId) {
     return [];
   }
 
   const retLocations = await customerColl
     .find({
-      organizationId: ObjectId.createFromHexString(orgId),
+      organizationId: ensureObjectId(orgId),
       active: true,
     })
     .toArray();

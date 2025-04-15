@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import {
   comparePassword,
+  ensureObjectId,
   generateTokens,
   getTimeUTC,
   hashPassword,
@@ -81,7 +82,11 @@ export const createAdminUser = async (req, res, next) => {
         _id: user._id,
       },
       {
-        $set: { refreshToken: hashedRefreshToken, updatedAt: timestamp2 },
+        $set: {
+          refreshToken: hashedRefreshToken,
+          updatedAt: timestamp2,
+          updatedBy: ensureObjectId(user._id),
+        },
       }
     );
 
@@ -130,7 +135,7 @@ export const newAccessToken = async (req, res, next) => {
     }
 
     const { accessToken, refreshToken, hashedRefreshToken } =
-      await generateTokens(user._id);
+      await generateTokens(userId);
 
     const timestamp = getTimeUTC();
 
@@ -139,7 +144,11 @@ export const newAccessToken = async (req, res, next) => {
         _id: userId,
       },
       {
-        $set: { refreshToken: hashedRefreshToken, updatedAt: timestamp },
+        $set: {
+          refreshToken: hashedRefreshToken,
+          updatedAt: timestamp,
+          updatedBy: ensureObjectId(user._id),
+        },
       }
     );
 
@@ -184,6 +193,7 @@ export const loginUser = async (req, res, next) => {
         $set: {
           refreshToken: hashedRefreshToken,
           updatedAt: timestamp,
+          updatedBy: ensureObjectId(user._id),
           lastLogin: timestamp,
         },
       }
@@ -226,7 +236,7 @@ export const logoutUser = async (req, res, next) => {
 
     await userColl.updateOne(
       {
-        _id: new ObjectId(userId),
+        _id: ensureObjectId(userId),
       },
       {
         $unset: { refreshToken: 1 },
@@ -234,6 +244,7 @@ export const logoutUser = async (req, res, next) => {
       {
         $set: {
           updatedAt: timestamp,
+          updatedBy: ensureObjectId(user._id),
         },
       }
     );
@@ -296,7 +307,7 @@ export const findUserById = async (id, fields) => {
 
     const foundUser = await userColl.findOne(
       {
-        _id: ObjectId.createFromHexString(id),
+        _id: ensureObjectId(id),
         roles: { $in: ["admin"] },
       },
       { projection: retFields }

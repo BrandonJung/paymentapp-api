@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import { BadRequestError, NotFoundError } from "../utils/errors.mjs";
 import {
@@ -54,7 +53,7 @@ export const retrieveActiveJobs = async (req, res, next) => {
 
     const retrievedJobs = await jobColl
       .find({
-        organizationId: ObjectId.createFromHexString(organizationId),
+        organizationId: organizationId,
         archived: false,
       })
       .toArray();
@@ -256,9 +255,10 @@ const createJobObj = (
     services: servicesArray,
     date: dateObj,
     organizationId: organization.id,
-    createdBy: userId,
+    createdBy: ensureObjectId(userId),
     createdAt: timestamp,
     updatedAt: timestamp,
+    updatedBy: ensureObjectId(userId),
     statusCode: 100,
     subTotal,
     taxAndFeesTotal,
@@ -346,7 +346,7 @@ const findJobById = async (id, fields) => {
 
     const foundJob = await jobColl.findOne(
       {
-        _id: ObjectId.createFromHexString(idString),
+        _id: ensureObjectId(idString),
       },
       { projection: retFields }
     );
