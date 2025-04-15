@@ -16,7 +16,7 @@ export const createLocation = async (
     const newSearch = createSearchString(location);
     const locationObj = {
       address: { street, unitNumber, city, province, postalCode, country },
-      search,
+      search: newSearch,
       organizationId,
       belongsTo: ensureObjectId(customer._id),
       createdAt: timestamp,

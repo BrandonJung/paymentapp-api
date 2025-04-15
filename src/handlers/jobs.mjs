@@ -2,6 +2,7 @@ import { database } from "../../config.mjs";
 import { BadRequestError, NotFoundError } from "../utils/errors.mjs";
 import {
   createDateObj,
+  ensureObjectId,
   getTimeUTC,
   validateNewCustomer,
   validateNewDate,

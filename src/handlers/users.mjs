@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { database } from "../../config.mjs";
 import {
   comparePassword,

@@ -1,6 +1,10 @@
 import { database } from "../../config.mjs";
 import { BadRequestError, NotFoundError } from "../utils/errors.mjs";
-import { getTimeUTC, newValidityObject } from "../utils/helpers.mjs";
+import {
+  ensureObjectId,
+  getTimeUTC,
+  newValidityObject,
+} from "../utils/helpers.mjs";
 import { findUserById } from "./users.mjs";
 
 const orgColl = database.collection("organizations");
@@ -208,6 +212,9 @@ const createTaxAndFeeRates = (taxAndFeeRates) => {
   let resTaxAndFeeRates = [...taxAndFeeRates];
   resTaxAndFeeRates.map((tf) => {
     tf.code = tf.name.toLowerCase();
+    if (tf.type === "flat") {
+      tf.amount *= 100;
+    }
     delete tf.id;
   });
   return resTaxAndFeeRates;
