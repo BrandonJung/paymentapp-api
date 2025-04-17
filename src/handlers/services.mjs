@@ -16,14 +16,13 @@ export const createServices = async (
     for (let service of services) {
       const { _id, name, description, taxesAndFees, quantity, price, rate } =
         service;
-      const backendPrice = price * 100;
-      const searchName = `${name} - $${backendPrice / 100}`;
+      const searchName = `${name} - $${price / 100}`;
       const serviceObj = {
         name,
         description,
         taxesAndFees,
         quantity,
-        price: backendPrice,
+        price: price,
         rate,
         organizationId,
         createdBy: ensureObjectId(userId),

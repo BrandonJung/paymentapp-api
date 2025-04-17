@@ -319,7 +319,41 @@ const createInvoiceNumber = (tag) => {
 };
 
 const calculateInvoiceTotals = (services, taxAndFeeRates) => {
-  return 0;
+  const servicesList = services;
+  const tfList = taxAndFeeRates;
+  let retSubTotal = 0;
+  let taxAndFeesTotal = 0;
+  let totalPrice = 0;
+  for (let service of servicesList) {
+    const price = service.price;
+    retSubTotal += price;
+
+    const totalTFMultiplier = 1;
+    const totalTFFlatAdd = 0;
+
+    for (let tf of service.taxesAndFees) {
+      const taxAndFee = tfList.find((t) => {
+        return t.code === tf.code;
+      });
+      const type = taxAndFee.type;
+      const tfAmount = taxAndFee.amount;
+      if (type === "percent") {
+        totalTFMultiplier += tfAmount;
+      } else if (type === "flat") {
+        totalTFFlatAdd += tfAmount;
+      }
+    }
+
+    taxAndFeesTotal += price * (totalTFMultiplier / 100);
+    taxAndFeesTotal += totalTFFlatAdd;
+    totalPrice += taxAndFeesTotal;
+    totalPrice += totalTFFlatAdd;
+  }
+  return {
+    subTotal: retSubTotal,
+    taxAndFeesTotal: taxAndFeesTotal,
+    totalPrice: totalPrice,
+  };
 };
 
 const findJobById = async (id, fields) => {
