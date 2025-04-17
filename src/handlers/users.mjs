@@ -32,7 +32,7 @@ export const retrieveUserData = async (req, res, next) => {
     }
 
     console.log("Retrieve User Data", userProfile);
-    return res.status(200).send({ message: "hey", user: userProfile });
+    return res.status(200).send({ user: userProfile });
   } catch (err) {
     console.log(err);
   }
@@ -198,7 +198,7 @@ export const loginUser = async (req, res, next) => {
       }
     );
 
-    const userHasOrg = user?.organization?.id ? true : false;
+    const userHasOrg = user?.organization?._id ? true : false;
 
     return res
       .status(200)

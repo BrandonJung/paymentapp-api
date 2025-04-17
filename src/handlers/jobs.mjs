@@ -23,6 +23,7 @@ import {
 } from "./customers.mjs";
 import { createServices, retrieveExistingServices } from "./services.mjs";
 import { findUserById } from "./users.mjs";
+import { findOrganizationById } from "./organizations.mjs";
 
 const jobColl = database.collection("jobs");
 
@@ -46,7 +47,7 @@ export const retrieveActiveJobs = async (req, res, next) => {
       return next(new BadRequestError("User does not exist"));
     }
 
-    const organizationId = user.organization?.id;
+    const organizationId = user.organization?._id;
 
     if (!organizationId) {
       return next(new BadRequestError("Organization does not exist"));
@@ -90,9 +91,15 @@ export const retrieveExistingData = async (req, res, next) => {
       return next(new BadRequestError("User does not exist"));
     }
 
-    const organizationId = user.organization?.id;
+    const organizationId = user.organization?._id;
 
     if (!organizationId) {
+      return next(new BadRequestError("Organization id not found"));
+    }
+
+    const organization = await findOrganizationById(organizationId);
+
+    if (!organization) {
       return next(new BadRequestError("Organization does not exist"));
     }
 
@@ -102,9 +109,12 @@ export const retrieveExistingData = async (req, res, next) => {
 
     const existingCustomers = await retrieveExistingCustomers(organizationId);
 
-    return res
-      .status(200)
-      .send({ existingCustomers, existingLocations, existingServices });
+    return res.status(200).send({
+      existingCustomers,
+      existingLocations,
+      existingServices,
+      organization,
+    });
   } catch (err) {
     console.log(err);
   }
@@ -141,7 +151,11 @@ export const createJob = async (req, res, next) => {
       return next(new BadRequestError("Invalid User id"));
     }
 
-    const organization = user.organization;
+    const organization = await findOrganizationById(user.organization._id);
+
+    if (!organization) {
+      return next(new BadRequestError("No organization found"));
+    }
 
     const customerRes = await findCustomerByEmail(customer.email);
 
@@ -156,7 +170,7 @@ export const createJob = async (req, res, next) => {
     } else {
       const newCustomerObj = await createCustomer(
         customer,
-        organization.id,
+        organization._id,
         userId
       );
       customerObj = newCustomerObj;
@@ -175,7 +189,7 @@ export const createJob = async (req, res, next) => {
     } else {
       const newLocationObj = await createLocation(
         location,
-        organization.id,
+        organization._id,
         customerObj,
         userId
       );
@@ -184,8 +198,8 @@ export const createJob = async (req, res, next) => {
 
     const newServicesRes = await createServices(
       services,
-      organization.id,
-      organization.taxAndFeeRates,
+      organization._id,
+      organization.taxesAndFeeRates,
       userId
     );
 
@@ -201,6 +215,16 @@ export const createJob = async (req, res, next) => {
       startDate: startDateObj,
       endDate: endDateObj,
     };
+
+    console.log(
+      "Job Obj:",
+      customerObj,
+      userId,
+      organization,
+      locationObj,
+      services,
+      newDateObj
+    );
 
     const jobObj = createJobObj(
       customerObj,
@@ -247,7 +271,7 @@ const createJobObj = (
 
   const { subTotal, taxAndFeesTotal, totalPrice } = calculateInvoiceTotals(
     servicesArray,
-    organization.taxAndFeeRates
+    organization.taxesAndFeeRates
   );
 
   const retJobObj = {
@@ -255,7 +279,7 @@ const createJobObj = (
     location: locationObj,
     services: servicesArray,
     date: dateObj,
-    organizationId: organization.id,
+    organizationId: organization._id,
     createdBy: ensureObjectId(userId),
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -275,7 +299,7 @@ const createJobObj = (
 const createCustomerJobObj = (customer) => {
   const { _id, firstName, lastName, username, email, phoneNumber } = customer;
   const retObj = {
-    id: _id,
+    _id: _id,
     firstName,
     lastName,
     username,
@@ -286,7 +310,8 @@ const createCustomerJobObj = (customer) => {
 };
 
 const createLocationJobObj = (location) => {
-  const { street, unitNumber, city, province, postalCode, country } = location;
+  const { street, unitNumber, city, province, postalCode, country } =
+    location.address;
   const retObj = {
     street,
     unitNumber,
@@ -318,9 +343,9 @@ const createInvoiceNumber = (tag) => {
   return `${tag}-${timestamp.toUpperCase()}`;
 };
 
-const calculateInvoiceTotals = (services, taxAndFeeRates) => {
+const calculateInvoiceTotals = (services, taxesAndFeeRates) => {
   const servicesList = services;
-  const tfList = taxAndFeeRates;
+  const tfList = taxesAndFeeRates;
   let retSubTotal = 0;
   let taxAndFeesTotal = 0;
   let totalPrice = 0;
@@ -328,13 +353,11 @@ const calculateInvoiceTotals = (services, taxAndFeeRates) => {
     const price = service.price;
     retSubTotal += price;
 
-    const totalTFMultiplier = 1;
-    const totalTFFlatAdd = 0;
+    let totalTFMultiplier = 0;
+    let totalTFFlatAdd = 0;
 
     for (let tf of service.taxesAndFees) {
-      const taxAndFee = tfList.find((t) => {
-        return t.code === tf.code;
-      });
+      const taxAndFee = tfList.find((t) => t.code === tf.code);
       const type = taxAndFee.type;
       const tfAmount = taxAndFee.amount;
       if (type === "percent") {
@@ -346,9 +369,8 @@ const calculateInvoiceTotals = (services, taxAndFeeRates) => {
 
     taxAndFeesTotal += price * (totalTFMultiplier / 100);
     taxAndFeesTotal += totalTFFlatAdd;
-    totalPrice += taxAndFeesTotal;
-    totalPrice += totalTFFlatAdd;
   }
+  totalPrice = taxAndFeesTotal + retSubTotal;
   return {
     subTotal: retSubTotal,
     taxAndFeesTotal: taxAndFeesTotal,

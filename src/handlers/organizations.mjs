@@ -27,7 +27,7 @@ export const retrieveOrganization = async (req, res, next) => {
       return next(new NotFoundError("No organization on this user"));
     }
 
-    const organization = await findOrganizationById(user.organization.id);
+    const organization = await findOrganizationById(user.organization._id);
     if (!organization) {
       return next(new NotFoundError("Organization does not exist"));
     }
@@ -50,9 +50,9 @@ export const createOrganization = async (req, res, next) => {
     return next(new BadRequestError(orgNameIsValid.message));
   }
 
-  const taxAndFeeRatesAreValid = validateTaxAndFees(taxesAndFees);
-  if (!taxAndFeeRatesAreValid) {
-    return next(new BadRequestError(taxAndFeeRatesAreValid.message));
+  const taxesAndFeeRatesAreValid = validateTaxAndFees(taxesAndFees);
+  if (!taxesAndFeeRatesAreValid) {
+    return next(new BadRequestError(taxesAndFeeRatesAreValid.message));
   }
 
   try {
@@ -77,7 +77,7 @@ export const createOrganization = async (req, res, next) => {
 
       const orgTag = createOrgTag(name, tag);
 
-      const taxAndFeeRates = createTaxAndFeeRates(taxesAndFees);
+      const taxesAndFeeRates = createtaxesAndFeeRates(taxesAndFees);
 
       const orgObj = {
         name,
@@ -85,7 +85,7 @@ export const createOrganization = async (req, res, next) => {
         createdAt: timestamp,
         updatedAt: timestamp,
         updatedBy: ensureObjectId(userId),
-        taxesAndFeeRates: taxAndFeeRates,
+        taxesAndFeeRates: taxesAndFeeRates,
         tag: orgTag,
       };
 
@@ -98,7 +98,7 @@ export const createOrganization = async (req, res, next) => {
         {
           $set: {
             organization: {
-              id: ensureObjectId(insertedId),
+              _id: ensureObjectId(insertedId),
               tag: orgTag,
             },
           },
@@ -154,7 +154,7 @@ export const updateOrganizationField = async (fields) => {
         updatedAt: timestamp,
         updatedBy: ensureObjectId(userId),
         organization: {
-          id: _id,
+          _id: _id,
           tag: tag,
         },
       },
@@ -208,19 +208,17 @@ const createOrgTag = (name, tag) => {
   }
 };
 
-const createTaxAndFeeRates = (taxAndFeeRates) => {
-  let resTaxAndFeeRates = [...taxAndFeeRates];
-  resTaxAndFeeRates.map((tf) => {
+const createtaxesAndFeeRates = (taxesAndFeeRates) => {
+  let restaxesAndFeeRates = [...taxesAndFeeRates];
+  restaxesAndFeeRates.map((tf) => {
     tf.code = tf.name.toLowerCase();
-    if (tf.type === "flat") {
-      tf.amount *= 100;
-    }
-    delete tf.id;
+    delete tf._id;
+    delete tf.identifier;
   });
-  return resTaxAndFeeRates;
+  return restaxesAndFeeRates;
 };
 
-const findOrganizationById = async (id, fields) => {
+export const findOrganizationById = async (id, fields) => {
   if (!id) {
     return null;
   }

@@ -6,7 +6,7 @@ const servicesColl = database.collection("services");
 export const createServices = async (
   services,
   organizationId,
-  orgTaxAndFeeRates,
+  orgtaxesAndFeeRates,
   userId
 ) => {
   try {
@@ -46,7 +46,7 @@ export const createServices = async (
       serviceToUpdate.forEach(async (service) => {
         await servicesColl.updateOne(
           {
-            _id: service.id,
+            _id: service._id,
           },
           {
             $set: service,
