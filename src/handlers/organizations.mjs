@@ -129,6 +129,8 @@ export const updateOrganizationField = async (fields) => {
     return null;
   }
 
+  const resTaxesAndFees = createtaxesAndFeeRates(taxesAndFees);
+
   const timestamp = getTimeUTC();
   await orgColl.updateOne(
     {
@@ -138,7 +140,7 @@ export const updateOrganizationField = async (fields) => {
       $set: {
         name,
         tag,
-        taxesAndFeeRates: taxesAndFees,
+        taxesAndFeeRates: resTaxesAndFees,
         updatedAt: timestamp,
         updatedBy: ensureObjectId(userId),
       },
@@ -212,8 +214,10 @@ const createtaxesAndFeeRates = (taxesAndFeeRates) => {
   let restaxesAndFeeRates = [...taxesAndFeeRates];
   restaxesAndFeeRates.map((tf) => {
     tf.code = tf.name.toLowerCase();
+    if (tf.type === "flat") {
+      tf.amount *= 100;
+    }
     delete tf._id;
-    delete tf.identifier;
   });
   return restaxesAndFeeRates;
 };

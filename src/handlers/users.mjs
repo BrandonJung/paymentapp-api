@@ -228,7 +228,8 @@ export const logoutUser = async (req, res, next) => {
     const user = await findUserById(userId);
 
     if (!user) {
-      return next(new NotFoundError("User does not exist"));
+      res.clearCookie("refreshToken", { httpOnly: true });
+      return res.status(200).send({ message: "User logged out" });
     }
 
     const timestamp = getTimeUTC();
