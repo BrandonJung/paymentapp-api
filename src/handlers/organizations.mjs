@@ -205,7 +205,8 @@ const createOrgTag = (name, tag) => {
     const resTag = tag.toUpperCase();
     return resTag;
   } else {
-    const resTag = `${name.trim().slice(0, 3).toUpperCase()}`;
+    const trimmedName = name.replaceAll(" ", "");
+    const resTag = `${trimmedName.slice(0, 3).toUpperCase()}`;
     return resTag;
   }
 };

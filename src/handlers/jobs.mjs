@@ -4,6 +4,7 @@ import {
   createDateObj,
   ensureObjectId,
   getTimeUTC,
+  toFixedNumber,
   validateNewCustomer,
   validateNewDate,
   validateNewLocation,
@@ -55,7 +56,7 @@ export const retrieveActiveJobs = async (req, res, next) => {
 
     const retrievedJobs = await jobColl
       .find({
-        organizationId: organizationId,
+        organizationId: ensureObjectId(organizationId),
         archived: false,
       })
       .toArray();
@@ -310,8 +311,7 @@ const createCustomerJobObj = (customer) => {
 };
 
 const createLocationJobObj = (location) => {
-  const { street, unitNumber, city, province, postalCode, country } =
-    location.address;
+  const { street, unitNumber, city, province, postalCode, country } = location;
   const retObj = {
     street,
     unitNumber,
@@ -371,10 +371,11 @@ const calculateInvoiceTotals = (services, taxesAndFeeRates) => {
     taxAndFeesTotal += totalTFFlatAdd;
   }
   totalPrice = taxAndFeesTotal + retSubTotal;
+
   return {
-    subTotal: retSubTotal,
-    taxAndFeesTotal: taxAndFeesTotal,
-    totalPrice: totalPrice,
+    subTotal: toFixedNumber(retSubTotal),
+    taxAndFeesTotal: toFixedNumber(taxAndFeesTotal),
+    totalPrice: toFixedNumber(totalPrice),
   };
 };
 

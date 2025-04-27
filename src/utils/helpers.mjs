@@ -127,3 +127,8 @@ export const ensureObjectId = (id) => {
     return id;
   }
 };
+
+export const toFixedNumber = (num, digits = 2, base = 10) => {
+  const pow = Math.pow(base, digits);
+  return Math.round(num * pow) / pow;
+};
