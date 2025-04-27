@@ -4,6 +4,8 @@ import {
   ensureObjectId,
   getTimeUTC,
   newValidityObject,
+  validateEmail,
+  validatePhone,
 } from "../utils/helpers.mjs";
 import { findUserById } from "./users.mjs";
 
@@ -32,18 +34,20 @@ export const retrieveOrganization = async (req, res, next) => {
       return next(new NotFoundError("Organization does not exist"));
     }
 
-    const { name, tag, taxesAndFeeRates, _id } = organization;
+    const { name, tag, email, phoneNumber, taxesAndFeeRates, _id } =
+      organization;
 
-    return res
-      .status(200)
-      .send({ details: { name, tag, _id }, taxesAndFeeRates });
+    return res.status(200).send({
+      details: { name, tag, email, phoneNumber, _id },
+      taxesAndFeeRates,
+    });
   } catch (err) {
     console.log(err);
   }
 };
 
 export const createOrganization = async (req, res, next) => {
-  const { userId, name, tag, taxesAndFees, _id } = req.body;
+  const { userId, name, tag, email, phoneNumber, taxesAndFees, _id } = req.body;
 
   const orgNameIsValid = validateOrgName(name);
   if (!orgNameIsValid.valid) {
@@ -53,6 +57,15 @@ export const createOrganization = async (req, res, next) => {
   const taxesAndFeeRatesAreValid = validateTaxAndFees(taxesAndFees);
   if (!taxesAndFeeRatesAreValid) {
     return next(new BadRequestError(taxesAndFeeRatesAreValid.message));
+  }
+
+  const emailIsValid = validateEmail(email);
+  if (!emailIsValid) {
+    return next(new BadRequestError(emailIsValid.message));
+  }
+  const phoneNumberIsValid = validatePhone(phoneNumber);
+  if (!phoneNumberIsValid) {
+    return next(new BadRequestError(phoneNumberIsValid.message));
   }
 
   try {
@@ -67,6 +80,8 @@ export const createOrganization = async (req, res, next) => {
       const updatedOrganization = await updateOrganizationField({
         _id,
         name,
+        email,
+        phoneNumber,
         tag,
         taxesAndFees,
         userId,
@@ -109,6 +124,8 @@ export const createOrganization = async (req, res, next) => {
 
     const orgRes = {
       details: {
+        email: organizationRes.email,
+        phoneNumber: organizationRes.phoneNumber,
         name: organizationRes.name,
         tag: organizationRes.tag,
         _id: ensureObjectId(organizationRes._id),
@@ -123,7 +140,7 @@ export const createOrganization = async (req, res, next) => {
 };
 
 export const updateOrganizationField = async (fields) => {
-  const { _id, name, tag, taxesAndFees, userId } = fields;
+  const { _id, name, tag, email, phoneNumber, taxesAndFees, userId } = fields;
 
   if (!_id) {
     return null;
@@ -140,6 +157,8 @@ export const updateOrganizationField = async (fields) => {
       $set: {
         name,
         tag,
+        email,
+        phoneNumber,
         taxesAndFeeRates: resTaxesAndFees,
         updatedAt: timestamp,
         updatedBy: ensureObjectId(userId),

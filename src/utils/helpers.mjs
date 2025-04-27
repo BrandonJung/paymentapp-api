@@ -24,11 +24,6 @@ export const compareToken = async (plain, hashed) => {
   return await bcrypt.compare(plain, hashed);
 };
 
-export const isValidEmail = (email) => {
-  // TODO: implement this
-  return true;
-};
-
 export const getTimeUTC = () => {
   const timestamp = new Date().getTime();
   return timestamp;
@@ -131,4 +126,23 @@ export const ensureObjectId = (id) => {
 export const toFixedNumber = (num, digits = 2, base = 10) => {
   const pow = Math.pow(base, digits);
   return Math.round(num * pow) / pow;
+};
+
+export const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (!emailRegex.test(email)) {
+    return newValidityObject(false, "Invalid email");
+  }
+  return newValidityObject(true);
+};
+
+export const validatePhone = (phone) => {
+  // Example regex for US phone numbers
+  const phoneRegex = /^(?:\+1\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
+
+  if (!phoneRegex.test(phone)) {
+    return newValidityObject(false, "Invalid phone number");
+  }
+  return newValidityObject(true);
 };
