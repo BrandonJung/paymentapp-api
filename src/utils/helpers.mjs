@@ -146,3 +146,9 @@ export const validatePhone = (phone) => {
   }
   return newValidityObject(true);
 };
+
+export const convertPriceToDisplay = (price) => {
+  if (isNaN(price) || price === null) return price;
+  let retPrice = price / 100;
+  return retPrice;
+};

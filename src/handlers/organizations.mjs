@@ -96,6 +96,8 @@ export const createOrganization = async (req, res, next) => {
 
       const orgObj = {
         name,
+        email,
+        phoneNumber,
         createdBy: ensureObjectId(userId),
         createdAt: timestamp,
         updatedAt: timestamp,
