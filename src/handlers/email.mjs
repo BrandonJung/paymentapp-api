@@ -1,6 +1,7 @@
 import sgMail from "@sendgrid/mail";
 import { findOrganizationById } from "./organizations.mjs";
 import { getStartJobHTML, getStartJobText } from "../utils/emailTemplates.mjs";
+import { findJobById, updateJobStatus } from "./jobs.mjs";
 
 export const sendStartJobEmail = async (req, res, next) => {
   const { job } = req.body;
@@ -53,7 +54,13 @@ export const sendStartJobEmail = async (req, res, next) => {
       emailText,
       emailHTML
     );
-    return res.status(200).send(sendEmailRes);
+    if (sendEmailRes.success) {
+      const updateJobRes = await updateJobStatus(job._id, 200);
+      if (updateJobRes.success) {
+        return res.status(200).send({ success: true });
+      }
+    }
+    return res.status(200).send({ success: false });
   } catch (err) {
     console.log("Error sending start job email: ", err);
   }

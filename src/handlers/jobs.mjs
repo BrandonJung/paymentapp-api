@@ -61,7 +61,12 @@ export const retrieveActiveJobs = async (req, res, next) => {
       })
       .toArray();
 
-    const groups = {};
+    const groups = {
+      1: [],
+      2: [],
+      3: [],
+      4: [],
+    };
 
     retrievedJobs.map((job) => {
       const statusCode = job.statusCode;
@@ -379,7 +384,7 @@ const calculateInvoiceTotals = (services, taxesAndFeeRates) => {
   };
 };
 
-const findJobById = async (id, fields) => {
+export const findJobById = async (id, fields) => {
   if (!id) {
     return null;
   }
@@ -412,5 +417,30 @@ const findJobById = async (id, fields) => {
     return foundJob;
   } catch (err) {
     console.log(err);
+  }
+};
+
+export const updateJobStatus = async (jobId, newStatus) => {
+  if (!jobId) {
+    return { success: false };
+  }
+  if (!newStatus) {
+    return { success: false };
+  }
+
+  try {
+    await jobColl.updateOne(
+      {
+        _id: ensureObjectId(jobId),
+      },
+      {
+        $set: {
+          statusCode: newStatus,
+        },
+      }
+    );
+    return { success: true };
+  } catch (err) {
+    console.log("Error updating job status: ", err);
   }
 };
