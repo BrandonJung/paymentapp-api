@@ -12,6 +12,22 @@ import { findUserById } from "./users.mjs";
 const orgColl = database.collection("organizations");
 const userColl = database.collection("users");
 
+export const getOrganization = async (req, res, next) => {
+  const { orgId } = req.query;
+  if (!orgId) {
+    return next(new BadRequestError("Org id not does not"));
+  }
+  try {
+    const org = await findOrganizationById(orgId);
+    if (!org) {
+      return next(new BadRequestError("Org does not exist"));
+    }
+    return res.status(200).send({ org });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 export const retrieveOrganization = async (req, res, next) => {
   const { userId } = req.query;
 

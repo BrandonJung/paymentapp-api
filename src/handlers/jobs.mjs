@@ -28,13 +28,23 @@ import { findOrganizationById } from "./organizations.mjs";
 
 const jobColl = database.collection("jobs");
 
-export const emailUserJob = async (req, res, next) => {};
+export const retrieveJob = async (req, res, next) => {
+  const { jobId } = req.query;
+  console.log("asdf", jobId);
+  if (!jobId) {
+    return next(new BadRequestError("No job id"));
+  }
+  try {
+    const job = await findJobById(jobId);
+    if (!job) {
+      return next(new BadRequestError("Job does not exist"));
+    }
 
-export const sendJobInvoice = async (req, res, next) => {};
-
-export const payJobInvoice = async (req, res, next) => {};
-
-export const archiveJob = async (req, res, next) => {};
+    return res.status(200).send({ job });
+  } catch (err) {
+    console.log("Error retrieving job", err);
+  }
+};
 
 export const retrieveActiveJobs = async (req, res, next) => {
   const { userId } = req.query;

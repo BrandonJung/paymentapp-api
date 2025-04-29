@@ -19,7 +19,8 @@
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "6.15"
+    "mongodb": "6.15",
+    "stripe": "^18.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
