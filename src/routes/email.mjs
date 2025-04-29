@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { sendStartJobEmail } from "../handlers/email.mjs";
+import { sendInvoiceEmail, sendStartJobEmail } from "../handlers/email.mjs";
 
 const router = Router();
 
 router.post("/startJob", sendStartJobEmail);
+router.post("/sendInvoice", sendInvoiceEmail);
 
 export default router;

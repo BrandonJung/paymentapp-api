@@ -1,6 +1,11 @@
 import sgMail from "@sendgrid/mail";
 import { findOrganizationById } from "./organizations.mjs";
-import { getStartJobHTML, getStartJobText } from "../utils/emailTemplates.mjs";
+import {
+  getInvoiceHTML,
+  getInvoiceText,
+  getStartJobHTML,
+  getStartJobText,
+} from "../utils/emailTemplates.mjs";
 import { findJobById, updateJobStatus } from "./jobs.mjs";
 
 export const sendStartJobEmail = async (req, res, next) => {
@@ -20,6 +25,8 @@ export const sendStartJobEmail = async (req, res, next) => {
   try {
     const organization = await findOrganizationById(organizationId);
     const orgEmail = organization.email;
+    const orgPhone = organization.phoneNumber;
+    const orgName = organization.name;
     const subjectText = `${organization.name} - Service booking confirmation`;
     const emailText = getStartJobText(
       customer.firstName,
@@ -29,9 +36,9 @@ export const sendStartJobEmail = async (req, res, next) => {
       taxAndFeesTotal,
       totalPrice,
       location,
-      organization.phoneNumber,
-      organization.email,
-      organization.name,
+      orgPhone,
+      orgEmail,
+      orgName,
       date
     );
     const emailHTML = getStartJobHTML(
@@ -42,9 +49,9 @@ export const sendStartJobEmail = async (req, res, next) => {
       taxAndFeesTotal,
       totalPrice,
       location,
-      organization.phoneNumber,
-      organization.email,
-      organization.name,
+      orgPhone,
+      orgEmail,
+      orgName,
       date
     );
     const sendEmailRes = await sendEmail(
@@ -63,6 +70,52 @@ export const sendStartJobEmail = async (req, res, next) => {
     return res.status(200).send({ success: false });
   } catch (err) {
     console.log("Error sending start job email: ", err);
+  }
+};
+
+export const sendInvoiceEmail = async (req, res, next) => {
+  const { job } = req.body;
+  const { customer, date, organizationId } = job;
+  try {
+    const encodedId = encodeURIComponent(job._id);
+    const link = `http://localhost:3000/customer/${encodedId}/pay`;
+    const organization = await findOrganizationById(organizationId);
+    const orgEmail = organization.email;
+    const orgPhone = organization.phoneNumber;
+    const orgName = organization.name;
+    const subjectText = `${organization.name} - Service Invoice`;
+    const emailText = getInvoiceText(
+      customer.firstName,
+      date,
+      link,
+      orgPhone,
+      orgEmail,
+      orgName
+    );
+    const emailHTML = getInvoiceHTML(
+      customer.firstName,
+      date,
+      link,
+      orgPhone,
+      orgEmail,
+      orgName
+    );
+    const sendEmailRes = await sendEmail(
+      customer.email,
+      orgEmail,
+      subjectText,
+      emailText,
+      emailHTML
+    );
+    if (sendEmailRes.success) {
+      const updateJobRes = await updateJobStatus(job._id, 300);
+      if (updateJobRes.success) {
+        return res.status(200).send({ success: true });
+      }
+    }
+    return res.status(200).send({ success: false });
+  } catch (err) {
+    console.log("Error sending invoice email", err);
   }
 };
 
