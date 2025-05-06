@@ -263,3 +263,61 @@ If you have any questions or concerns, please contact us at ${orgPhone} or ${org
 Have a great day!
 ${orgName}`;
 };
+
+export const getReceiptHTML = (name, link, orgPhone, orgEmail, orgName) => {
+  return `<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Post Service Report</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 20px; color: #333;">
+  <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    
+    <!-- Logo Section -->
+    <div style="background-color: #f0f4f8; padding: 20px; text-align: center; border-radius: 8px;">
+      <img src=${link} alt="Company Logo" style="max-width: 200px; height: auto;">
+    </div>
+
+    <!-- Main Content -->
+    <h2 style="color: #4a90e2; margin-top: 30px;">Hi ${name},</h2>
+    <p>
+      Thank you for your payment! Your payment was successful.
+    </p>
+    <p>
+      You can still access your photos at the link below.
+    </p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href=${link} style="background-color: #4a90e2; color: #ffffff; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-size: 16px;">
+        View Photos
+      </a>
+    </div>
+
+    <p>
+      If you have any questions or concerns, please contact us at <strong>${orgPhone}</strong> or <strong>${orgEmail}</strong>.
+    </p>
+
+    <div style="margin-top: 40px; font-size: 12px; color: #888;">
+      Have a great day!<br>
+      ${orgName}
+    </div>
+
+  </div>
+</body>
+</html>`;
+};
+
+export const getReceiptText = (name, link, orgPhone, orgEmail, orgName) => {
+  return `
+Hi ${name},
+
+Thank you for your payment! Your payment was successful.
+
+You can still access your photos at the link below.
+${link}
+
+If you have any questions or concerns, please contact us at ${orgPhone} or ${orgEmail}.
+
+Have a great day!
+${orgName}`;
+};

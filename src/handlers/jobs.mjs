@@ -25,12 +25,102 @@ import {
 import { createServices, retrieveExistingServices } from "./services.mjs";
 import { findUserById } from "./users.mjs";
 import { findOrganizationById } from "./organizations.mjs";
+import {
+  sendInvoiceEmail,
+  sendReceiptEmail,
+  sendStartJobEmail,
+} from "./email.mjs";
 
 const jobColl = database.collection("jobs");
 
+export const startJob = async (req, res, next) => {
+  const { job } = req.body;
+
+  if (!job) {
+    return next(new BadRequestError("No job passed"));
+  }
+
+  const { organizationId } = job;
+
+  try {
+    const organization = await findOrganizationById(organizationId);
+    const emailRes = await sendStartJobEmail(job, organization);
+    if (emailRes.success) {
+      const updateJobRes = await updateJobStatus(job._id, 200);
+      if (updateJobRes.success) {
+        return res.status(200).send({ success: true, job: updateJobRes.job });
+      }
+    }
+    return res.status(200).send({ success: false });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const invoiceJob = async (req, res, next) => {
+  const { job } = req.body;
+  if (!job) {
+    return next(new BadRequestError("No job passed"));
+  }
+
+  const { organizationId } = job;
+  try {
+    const organization = await findOrganizationById(organizationId);
+    const emailRes = await sendInvoiceEmail(job, organization);
+    if (emailRes.success) {
+      const updateJobRes = await updateJobStatus(job._id, 300);
+      if (updateJobRes.success) {
+        return res.status(200).send({ success: true, job: updateJobRes.job });
+      }
+    }
+    return res.status(200).send({ success: false });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const payJob = async (req, res, next) => {
+  const { job } = req.body;
+  if (!job) {
+    return next(new BadRequestError("No job passed"));
+  }
+
+  const { organizationId } = job;
+  try {
+    const organization = await findOrganizationById(organizationId);
+    const emailRes = await sendReceiptEmail(job, organization);
+    if (emailRes.success) {
+      const updateJobRes = await updateJobStatus(job._id, 400);
+      if (updateJobRes.success) {
+        return res.status(200).send({ success: true, job: updateJobRes.job });
+      }
+    }
+    return res.status(200).send({ success: false });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const archiveJob = async (req, res, next) => {
+  const { job } = req.body;
+  if (!job) {
+    return next(new BadRequestError("No job passed"));
+  }
+
+  try {
+    const updateJobRes = await updateJobStatus(job._id, 500);
+    if (updateJobRes.success) {
+      return res.status(200).send({ success: true, job: updateJobRes.job });
+    } else {
+      return res.status(200).send({ success: false });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const retrieveJob = async (req, res, next) => {
   const { jobId } = req.query;
-  console.log("asdf", jobId);
   if (!jobId) {
     return next(new BadRequestError("No job id"));
   }
@@ -449,7 +539,8 @@ export const updateJobStatus = async (jobId, newStatus) => {
         },
       }
     );
-    return { success: true };
+    const res = await findJobById(jobId);
+    return { success: true, job: res };
   } catch (err) {
     console.log("Error updating job status: ", err);
   }
